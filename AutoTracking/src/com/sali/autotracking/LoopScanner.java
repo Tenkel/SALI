@@ -22,6 +22,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.sali.autotracking.R;
 
+
 public class LoopScanner extends BroadcastReceiver implements
 		SensorEventListener {
 
