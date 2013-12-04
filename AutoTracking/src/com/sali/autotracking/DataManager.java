@@ -25,7 +25,12 @@ import android.widget.Toast;
 public class DataManager {
 	SQLiteStatement nroomsquery;
 	SQLiteStatement nsamplesquery;
-	
+	/*
+	*  String with table names (eg. private static final String LocalTable = "Local")
+	*  and
+	*  class (structure like) with inside table columns (eg. public static class Local)
+	*
+	*/
 	public static class Local {
 		public static final String ID = "Cd_local";
 		public static final String PX = "Vi_px";
@@ -62,15 +67,23 @@ public class DataManager {
 	}
 
 	private static final String SampleTable = "Sample";
+	
+	/*
+	 *  Data base name and version
+	 */
 
 	private static final String DB_NAME = "FindDB";
 	private static final int DB_VERSION = 1;
 
-	private DBMng DBManager;
-	private final Context theContext;
-	private SQLiteDatabase DBFind;
-	private ArrayList<Cursor> cursors = new ArrayList<Cursor>();
+	
+	private DBMng DBManager; // Object that connects to the database  
+	private final Context theContext; // Used to save the original context from which it's called 
+	private SQLiteDatabase DBFind; // The actual database object
+	private ArrayList<Cursor> cursors = new ArrayList<Cursor>(); // Cursors list so they are automatically destroyed when the object itself is.
 
+	/*
+	 *  Extending SQLiteOpenHelper so its objects can manipulate the database
+	 */
 	private static class DBMng extends SQLiteOpenHelper {
 
 		public DBMng(Context context) {
