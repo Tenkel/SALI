@@ -1,0 +1,2 @@
+-Corrigido erro de "nroom"
+-SharedPref adicionado ao BroadcastScanner e retirado do Captar
