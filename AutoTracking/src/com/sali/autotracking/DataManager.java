@@ -17,12 +17,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 import android.widget.Toast;
 
 public class DataManager {
+	// SQLiteStatement holders
 	SQLiteStatement nroomsquery;
 	SQLiteStatement nsamplesquery;
 	/*
@@ -88,9 +90,9 @@ public class DataManager {
 
 		public DBMng(Context context) {
 			super(context, DB_NAME, null, DB_VERSION);
-			// TODO Auto-generated constructor stub
 		}
 
+		// Database Creation thought SQL 'CREATE TABLE'
 		@Override
 		public void onCreate(SQLiteDatabase db) {
 			// Foreign Keys = ON
@@ -137,28 +139,40 @@ public class DataManager {
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			// TODO Auto-generated method stub
 
 		}
 
 	}
 
+	//Constructor save context and allocate new DB.
 	public DataManager(Context c) {
 		theContext = c;
 		DBManager = new DBMng(theContext);
 	}
 
+	//Get writable handler to the DB.
 	public DataManager open() {
 		DBFind = DBManager.getWritableDatabase();
 		return this;
 	}
 
+	//Deallocate all opened cursors and release handler.
 	public void close() {
 		for(Cursor cursor : cursors)
 			cursor.close();
 		DBManager.close();
 	}
 
+	/*
+	 * Insert new sample entry, including:
+	 *  
+	 * -RSSID power,
+	 * -the Access Point BSSID, 
+	 * -the XY and Room position of the device (User-entered), 
+	 * -Angle get thought gyroscope and magnetometer(float) as well as its accuracy(int),
+	 * 
+	 */
+	
 	public void insert(int power, String APcode, int localX, int localY,
 			int room, float gyrox, float gyroy, float gyroz, int gyroac) {
 		long localid, apid;
@@ -207,12 +221,14 @@ public class DataManager {
 
 	}
 
+	// Indirect query for locals
 	public Cursor Local(String[] infos, String Where) {
 		Cursor c = DBFind.query(LocalTable, infos, Where, null, null, null, null);
 		cursors.add(c);
 		return c;
 	}
 
+	//Indirect query for Access Points
 	public Cursor AP(String[] infos, String Where) {
 		Cursor c = DBFind.query(Access_PointTable, infos, Where, null, null, null,
 				null);
@@ -220,6 +236,7 @@ public class DataManager {
 		return c;
 	}
 
+	//Return the KDE object, which describes the probability distribution for a given Local (index) and Access Point (index). 
 	public KDE KSDFunction(long localid, long apid) {
 		InputStream is = null;
 		ObjectInputStream ois = null;
@@ -238,10 +255,10 @@ public class DataManager {
 
 			filename = list.getString(0);
 			try {
-				Log.d("DTM", "opening...");
+				Log.d("DataManager", "Opening file stream...");
 				is = new FileInputStream(theContext.getFilesDir()
 						+ File.separator + filename);
-				Log.d("DTM", "Opened " + theContext.getFilesDir()
+				Log.d("DataManager", "Opened " + theContext.getFilesDir()
 						+ File.separator + filename);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -250,9 +267,9 @@ public class DataManager {
 			}
 
 			try {
-				Log.d("DTM", "null");
+				Log.d("DataManager", "Opening object stream...");
 				ois = new ObjectInputStream(is);
-				Log.d("DTM", "Opened2");
+				Log.d("DataManager", "Object stream open");
 			} catch (StreamCorruptedException e) {
 				Toast.makeText(theContext, "File " + filename + " corrupted.",
 						Toast.LENGTH_LONG).show();
@@ -266,7 +283,7 @@ public class DataManager {
 			
 			try {
 				function = (KDE) ois.readObject();
-				Log.d("DTM", "Opened3");
+				Log.d("DataManager", "KDE Object read");
 			} catch (OptionalDataException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
@@ -289,6 +306,7 @@ public class DataManager {
 		return null;
 	}
 
+	//Calculate all KDE objects, for the whole database.
 	public void KSDWarming() {
 		ContentValues update = new ContentValues();
 		FileOutputStream fos = null;
@@ -355,6 +373,7 @@ public class DataManager {
 
 	}
 
+	//Indirect and simplified query for samples, for a given local an access point.
 	public Cursor Samples(long localid, long apid) {
 		String where = Sample.AP + " == " + apid + " AND " + Sample.LOCAL
 				+ " == " + localid;
@@ -364,6 +383,7 @@ public class DataManager {
 		return list;
 	}
 	
+	//Number of locals samples (NOT only rooms!) 
 	public long NRooms(){
 		nroomsquery = DBFind.compileStatement("select count(*) from " + LocalTable + " ");
 		return nroomsquery.simpleQueryForLong();		
@@ -380,25 +400,43 @@ public class DataManager {
 		
 	}
 	
+	//Delete a given local, all its samples and its KDE object link, object itself if present.
 	public void deleteroom(int room){
 		
 		String where;
+		int cdroom;
 		
 		SQLiteStatement sqlroom = DBFind.compileStatement("select ("+Local.ID+") from "+LocalTable+" where "+Local.ROOM+" = "+room);
-		int cdroom = (int) sqlroom.simpleQueryForLong();
-		
+					
+		// return void if there was no rows!
+		try {
+			cdroom = (int) sqlroom.simpleQueryForLong();
+		} catch (SQLiteDoneException  e) {
+			e.printStackTrace();
+			Toast.makeText(theContext,
+					"There wasn't anything to delete =(",
+					Toast.LENGTH_LONG).show();
+			return;
+		}
+				
 		where = Sample.LOCAL + " == " + cdroom;
 		DBFind.delete(SampleTable, where, null);
 		
 		where = KSD.ID_LOCAL + " == " + cdroom;
 		DBFind.delete(KSDTable, where, null);
 		
+		theContext.deleteFile("ks"+cdroom);
+		
 		where = Local.ID + " == " + cdroom;
 		DBFind.delete(LocalTable, where, null);
-		
+
+		Toast.makeText(theContext,
+			"YES! We did it! No more samples data here...",
+			Toast.LENGTH_LONG).show();
 		
 	}
 	
+	//return the mean of the samples per Access Point at a given room
 	public float NSamplesmean(long room){
 
 		nsamplesquery = DBFind.compileStatement("select count(*) from " + SampleTable + ", " + LocalTable  + " where " 
@@ -421,12 +459,13 @@ public class DataManager {
 		return nsamplesquery.simpleQueryForLong()/ans;
 		
 	}
-	
-	public void DBexport(String toPath) throws IOException{
+		
+	//Export Database to a given path with a given name
+	public void DBexport(String toPath, String name) throws IOException{
 		String dbPath = DBFind.getPath();
 		Log.d("DBexport", dbPath);
 		FileInputStream newDb = new FileInputStream(new File(dbPath));
-		FileOutputStream toFile = new FileOutputStream(new File(toPath,"BDbackup.db"));
+		FileOutputStream toFile = new FileOutputStream(new File(toPath,name));
 	    FileChannel fromChannel = null;
         FileChannel toChannel = null;
         try {
@@ -448,10 +487,18 @@ public class DataManager {
         }
 	}
 	
-	public void DBimport(String fromPath) throws IOException{
+	//Overload DBexport for a std name called BDbackup.db
+	public void DBexport(String toPath) throws IOException{
+		DBexport(toPath, "BDbackup.db");		
+	}
+	
+	
+	
+	//Import Database from a given path with a given name
+	public void DBimport(String fromPath, String name) throws IOException{
 		String dbPath = DBFind.getPath();
-		Log.d("DBexport", dbPath);
-		FileInputStream newDb = new FileInputStream(new File(fromPath,"BDbackup.db"));
+		Log.d("DBimport", dbPath);
+		FileInputStream newDb = new FileInputStream(new File(fromPath,name));
 		FileOutputStream toFile = new FileOutputStream(new File(dbPath));
 	    FileChannel fromChannel = null;
         FileChannel toChannel = null;
@@ -473,5 +520,15 @@ public class DataManager {
             }
         }
 	}
+	
+
+	//Overload DBimport for a std name called BDbackup.db
+	public void DBimport(String toPath) throws IOException{
+		DBimport(toPath, "BDbackup.db");		
+	}
+
+	
 }
+
+
 
