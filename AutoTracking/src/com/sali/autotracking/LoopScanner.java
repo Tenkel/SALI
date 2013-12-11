@@ -26,6 +26,7 @@ import com.sali.autotracking.R;
 public class LoopScanner extends BroadcastReceiver implements
 		SensorEventListener {
 
+	
 	private int numscan;
 	private ProgressBar LoopBar;
 	private IntentFilter i;
