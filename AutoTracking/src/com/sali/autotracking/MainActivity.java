@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
 			
 			public void onClick(View view) {
 				Intent onIntent = new Intent(view.getContext(),Online.class);
-				startActivityForResult(onIntent,0);
+				startActivityForResult(onIntent,0); // Ao clicar o botao, a atividade é iniciada
 				
 			}
 		});
@@ -55,7 +55,6 @@ public class MainActivity extends Activity {
 				try {
 					DTmg.DBexport( getExternalFilesDir(null).getAbsolutePath());
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				}
@@ -66,6 +65,8 @@ public class MainActivity extends Activity {
 			}
 		});
         
+        
+        // Funcao do botao Import
         ((Button) findViewById(R.id.Button01)).setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
@@ -75,7 +76,6 @@ public class MainActivity extends Activity {
 				try {
 					DTmg.DBimport( getExternalFilesDir(null).getAbsolutePath());
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				}
@@ -86,13 +86,13 @@ public class MainActivity extends Activity {
 			}
 		});
         
-                
+        // Funcao do botao Auto       
         Auto.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
-				 if (android.os.Build.VERSION.SDK_INT >= 11){
+				 if (android.os.Build.VERSION.SDK_INT >= 11){ 	// Verifica versao do android 
 				Intent offIntent = new Intent(v.getContext(),AutoColect.class);
-				startActivityForResult(offIntent,0);
+				startActivityForResult(offIntent,0); // Ao clicar o botao, a atividade é iniciada
 				 }
 				 else{
 					 Toast.makeText(getApplicationContext(), "Newer Android Version Required", Toast.LENGTH_LONG).show();

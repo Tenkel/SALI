@@ -58,20 +58,28 @@ public class Offline extends Activity implements OnTouchListener {
 	// Wifi Variables
 	private int numscan=0;
 	WifiManager wifi;
+	
+	// BroadcasReceiver é chamado quando o celular começa a busca por Pontos de acesso.
+	// Esta operação é assíncrona e não termina em um tempo fixo
 	BroadcastReceiver receiver = new BroadcastReceiver() {
 		@SuppressWarnings("deprecation")
 		@Override
 		public void onReceive(Context c, Intent i) {
 			WifiManager w = (WifiManager) c
 					.getSystemService(Context.WIFI_SERVICE);
-			w.getScanResults();
+			w.getScanResults(); // Obtem resultados após uma varredura
 
 			
 			DTmg.open();
-			List<ScanResult> results = w.getScanResults();
+			List<ScanResult> results = w.getScanResults(); // Coloca o resultado em uma lista
+			// Gera uma Matriz com os resultados
+			// Colunas: Potencia do sinal, BSSID (MAC do ponto de acesso), X, Y (posições no mapa), nroom (Número do quarto)
 			for (ScanResult result : results) {
 				DTmg.insert(result.level,result.BSSID,(int) relativeX,(int) relativeY, nroom, 0, 0, 0, 0);
 			}
+			
+			// Antes de sair da função, força a captura dos dados do ponto de acesso ao qual está conectado
+			// se não estiver conectado a nenhum, sai da função normalmente
 			WifiInfo actual_connection = w.getConnectionInfo ();
 			if (actual_connection.getNetworkId()!=-1){
 			DTmg.insert(actual_connection.getRssi(), actual_connection.getBSSID(),(int) relativeX,(int) relativeY, nroom, 0, 0, 0, 0);
@@ -79,19 +87,25 @@ public class Offline extends Activity implements OnTouchListener {
 			DTmg.close();
 
 			numscan+=1;
+			// Barra de progressão (feedback para o usuário saber quanto falta para finalizar o ciclo de varredura)
 			ProgressBar pb = (ProgressBar) findViewById(R.id.progress_bar);
 			pb.setProgress(numscan);
-			//
+			
+			// Gera um intervalo de 10ms entre as varreduras
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			
+			// Loop de varredura (são 20 ciclos atualmente)
 			if (numscan<20){
-				w.startScan();}
+				w.startScan(); // Se não acabou, continua com a varredura
+				}
+			
 			else{
 				// Block UI
-				BUSY=false;
+				BUSY=false; // Agora o usuário pode mexer na interface (mapa)
 				
 				// Shared that DB has new entry
 				SharedPreferences settings = getSharedPreferences(PREF,0);
@@ -172,18 +186,23 @@ public class Offline extends Activity implements OnTouchListener {
 	private LinearLayout linProgressBar;
 
 	
-	
+	// Debug Variables
 	private static final String TAG = "Touch";
+	
+	// Inicialização da atividade
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        //Salva configurações do usuário
         SharedPreferences settings = getSharedPreferences(PREF,0);
+        
+        // Tamanho padrão da imagem
 		float iWidth = settings.getFloat("iWidth", 400);	
 		float iHeight = settings.getFloat("iHeight", 400);
 		
 		SharedPreferences.Editor editor = settings.edit();
-		editor.putBoolean("warmed", true);
+		editor.putBoolean("warmed", true); // variavel que indica se o BD foi convertido para KDE
 		editor.commit();
         
         DTmg = new DataManager(this);
@@ -191,7 +210,7 @@ public class Offline extends Activity implements OnTouchListener {
         setContentView(R.layout.activity_offline);
         ImageView view = (ImageView) findViewById(R.id.imageView);
         Display d = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        displayWidth=d.getWidth();
+        displayWidth=d.getWidth(); // Verificando dimensões originais da planta
         displayHeight=d.getHeight();
         bd = (BitmapDrawable) this.getResources().getDrawable(R.drawable.quarto);
         imageWidth = bd.getBitmap().getWidth();
@@ -199,7 +218,7 @@ public class Offline extends Activity implements OnTouchListener {
         rimageWidth=imageWidth;
         rimageHeight=imageHeight;
 
-        matrix.postScale(iWidth/imageWidth, iHeight/imageHeight);
+        matrix.postScale(iWidth/imageWidth, iHeight/imageHeight); // Reescala a planta
 		imageHeight=(int) iHeight;imageWidth=(int) iWidth;
         
         view.setOnTouchListener(this);
@@ -213,7 +232,7 @@ public class Offline extends Activity implements OnTouchListener {
     }
     
     
-    
+    // No menu, há a possibilidade de Redimensionar a planta
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		
@@ -229,24 +248,25 @@ public class Offline extends Activity implements OnTouchListener {
 		
 		return super.onOptionsItemSelected(item);
 	}
-
+	
+	// Função para mover e dar zoom na planta 
 	public boolean onTouch(View v, MotionEvent event) {
 		ImageView view = (ImageView) v;
 		
 		//Handle touch events here
 		if (!BUSY){
 		switch (event.getAction() & MotionEvent.ACTION_MASK){
-		case MotionEvent.ACTION_DOWN:
-			savedMatrix.set(matrix);
+		case MotionEvent.ACTION_DOWN: // Um dedo na tela -> inicio do deslocamento da planta
+			savedMatrix.set(matrix); // A planta é uma matriz
 			start.set(event.getX(),event.getY());
 			mode = DRAG; 
 			break;
-		case MotionEvent.ACTION_UP:
+		case MotionEvent.ACTION_UP: // Um dedo foi retirado da tela -> Pode ser término do deslocamento ou início da captura
+			// Aqui a diferença é sutil: Como saber o que é um click e o que é um Drag? 
+			// Se o deslocamento é desprezível, é um click
 			if (mode == DRAG & tdist<5){
 			float[] values = new float[9];
 			matrix.getValues(values);
-			// values[2] and values[5] are the x,y coordinates of the top left corner of the drawable image, regardless of the zoom factor.
-			// values[0] and values[4] are the zoom factors for the image's width and height respectively. If you zoom at the same factor, these should both be the same value.
 			relativeX = (event.getX() - values[2]) / values[0];
 			relativeY = (event.getY() - values[5]) / values[4];
 			if (relativeX>=0 & relativeY>=0 & relativeX<=rimageWidth & relativeY<=rimageHeight){
@@ -255,6 +275,7 @@ public class Offline extends Activity implements OnTouchListener {
 				b_dialog=true;
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				builder.setView(textEntryView);
+				// Pergunta ao usuário se ele quer fazer a captura
 				builder.setMessage("Get AP powers?").setPositiveButton("Yes", dialogClickListener)
 			    .setNegativeButton("No", dialogClickListener).show();
 			
@@ -266,7 +287,7 @@ public class Offline extends Activity implements OnTouchListener {
 		case MotionEvent.ACTION_POINTER_UP:
 			mode = NONE;
 			break;
-		case MotionEvent.ACTION_MOVE:
+		case MotionEvent.ACTION_MOVE: // Movimentando a matriz (planta)
 			translateX = event.getX() - start.x;
 			translateY = event.getY() - start.y;
 			tdist+=Math.sqrt(Math.pow(translateX,2)+Math.pow(translateY,2));
@@ -274,14 +295,6 @@ public class Offline extends Activity implements OnTouchListener {
 			float reltransY = previous.y+translateY;
 			if (mode == DRAG){
 				matrix.set(savedMatrix);
-				//if (reltransX>0) translateX=-previous.x;
-				//if (reltransX<(-imageWidth+displayWidth)) translateX=-previous.x-imageWidth+displayWidth;
-				//else if ((translateY*-1)>(scale-1)*displayWidth) translateX=(1-scale)*displayWidth;
-				//if(reltransY>0) translateY=-previous.y;
-				//if (reltransY<(-imageHeight+displayHeight)) translateY=-previous.y-imageHeight+displayHeight;
-				//else if ((translateY*-1)>(scale-1)*displayHeight) translateY=(1-scale)*displayHeight;
-				//translateX=translateX/scale;
-				//translateY=translateY/scale;
 				matrix.postTranslate(translateX, translateY);			
 			}
 			else if (mode == ZOOM){
@@ -289,8 +302,6 @@ public class Offline extends Activity implements OnTouchListener {
 				if (newDist > 10f){
 					matrix.set(savedMatrix);
 					scale=newDist/oldDist;
-					//imageHeight*=scale;imageWidth*=scale;
-					//previous.x*=scale;previous.y*=scale;
 					matrix.postScale(scale, scale,mid.x,mid.y);
 				};
 				}
@@ -313,6 +324,7 @@ public class Offline extends Activity implements OnTouchListener {
 	}
 
 	@SuppressWarnings("deprecation")
+	// Função de Captura
 	private void acquire() {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -338,7 +350,7 @@ public class Offline extends Activity implements OnTouchListener {
 	}
 
 
-
+	// Funções para o zoom
 	private void midPoint(PointF point, MotionEvent event) {
 		float x = event.getX(0) + event.getX(1);
 		float y = event.getY(0) + event.getY(1);
@@ -352,6 +364,7 @@ public class Offline extends Activity implements OnTouchListener {
 		return FloatMath.sqrt(x * x + y * y);
 	}
 
+	// Dialog com o usuário para saber o quarto da captura
 	DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 	    public void onClick(DialogInterface dialog, int which) {
 
@@ -395,6 +408,7 @@ public class Offline extends Activity implements OnTouchListener {
 	    	}}
 	};
 
+		// Mostra na planta um círculo verde, indicando onde está sendo realizada a captura
 		private Bitmap createImage() {
 			ImageView view = (ImageView) findViewById(R.id.imageView);
 			Bitmap bmp = ((BitmapDrawable)view.getDrawable()).getBitmap();

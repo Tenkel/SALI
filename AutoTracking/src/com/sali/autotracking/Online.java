@@ -67,14 +67,16 @@ public class Online extends Activity implements OnTouchListener {
 	
 	// Wifi Variables
 	WifiManager wifi;
+	
+	// BroadcastReceiver recebe de maneira assíncrona os dados da captura
 	BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context c, Intent i) {
 			WifiManager w = (WifiManager) c
 					.getSystemService(Context.WIFI_SERVICE);
-			w.getScanResults();
+			w.getScanResults(); // Recebe os dados
 
-
+			// Cria lista dos dados recebidos
 			List<ScanResult> results = w.getScanResults();
 			String[] PAs = new String[100];
 			int[] Powers = new int[100];
@@ -85,6 +87,7 @@ public class Online extends Activity implements OnTouchListener {
 				index++;
 			}
 			
+			// Adiciona na lista a rede conectada, se houver
 			WifiInfo actual_connection = w.getConnectionInfo();
 			if(actual_connection.getNetworkId()!=-1){
 			PAs[index]=actual_connection.getBSSID();
@@ -93,13 +96,14 @@ public class Online extends Activity implements OnTouchListener {
 			
 			RSSIMEAN(PAs,Powers,numscan,index);
 			numscan++;
-			//
+			
+			// distancia entre os ciclos de varredura é de 10ms
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			if (numscan<4){
+			if (numscan<4){ // são 3 ciclos de varredura na fase Online
 				w.startScan();}
 			else{
 				numscan=0;
@@ -114,6 +118,7 @@ public class Online extends Activity implements OnTouchListener {
 			
 		}
 		
+		// Função que cria média das potencias recebidas durante os ciclos de varredura (para cada ponto de acesso)
 		private void RSSIMEAN(String[] pAs, int[] powers, int numscan,int index) {
 			int next=0;
 			for(int j=0;j<index;j++){
@@ -190,19 +195,20 @@ public class Online extends Activity implements OnTouchListener {
 	// Progress Bar Variables
 
 	
-	
+	// Debug Variable
 	private static final String TAG = "Touch";
-    @Override
+    
+	// Inicialização da atividade
+	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
 		SharedPreferences settings = getSharedPreferences(PREF,0);
-//		float iWidth = settings.getFloat("iWidth", 400);	
-//		float iHeight = settings.getFloat("iHeight", 400);
 		warmed = false; //settings.getBoolean("warmed",false);
 		
 		DTmg=new DataManager(this);
 		
+		// Obtendo dados da imagem e tratando ela como uma matriz
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_offline);
         ImageView view = (ImageView) findViewById(R.id.imageView);
@@ -215,13 +221,12 @@ public class Online extends Activity implements OnTouchListener {
         rimageWidth=imageWidth;
         rimageHeight=imageHeight;
         
-	//	matrix.postScale(iWidth/imageWidth, iHeight/imageHeight);
-	//	imageHeight=(int) iHeight;imageWidth=(int) iWidth;
 
         view.setOnTouchListener(this);
         
     }
 
+	// Chama Menu da atividade
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_online, menu);
@@ -229,7 +234,7 @@ public class Online extends Activity implements OnTouchListener {
     }
     
     
-    
+    // Opçoes do menu
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		
@@ -244,7 +249,8 @@ public class Online extends Activity implements OnTouchListener {
 		
 		return super.onOptionsItemSelected(item);
 	}
-
+	
+	// Tratamento da matriz (imagem) e interface com usuário (explicação detalhada no arquivo Offline)
 	public boolean onTouch(View v, MotionEvent event) {
 		ImageView view = (ImageView) v;
 		
@@ -309,7 +315,8 @@ public class Online extends Activity implements OnTouchListener {
 		float y = event.getY(0) - event.getY(1);
 		return FloatMath.sqrt(x * x + y * y);
 	}
-
+	
+	// Opçoes do Menu
 	DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 	    public void onClick(DialogInterface dialog, int which) {
 
@@ -355,7 +362,7 @@ public class Online extends Activity implements OnTouchListener {
 			
 			switch(algchoice){
 			case 1:
-				KSDAlg(realtime);
+				KSDAlg(realtime); // Algoritmo estatístico
 				
 				
 			}
@@ -371,26 +378,25 @@ public class Online extends Activity implements OnTouchListener {
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
-			    		  if (!warmed){
+			    		  if (!warmed){ // Chama função que cria o KDE
 			    			  DTmg.open();
 			    			  DTmg.KSDWarming();
 			    			  DTmg.close();
 			    			  }
-				    	  if (numscan==0)acquire();
+				    	  if (numscan==0)acquire(); // Captura os dados do ambiente para comparar com a base de dados
 				    	  while(!AcquisitionDONE){
 			    			  try {
-								Thread.sleep(5000);
+								Thread.sleep(5000); // Espera a captura terminar
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 			    		  }
-			    		  place = KSDCalc();
+				    	  
+			    		  place = KSDCalc(); // Chama função que calcula as probabilidades de cada local
 			    		  Message msg = Message.obtain();
 			              msg.what = STEP_ONE_COMPLETE;
 			              handler.sendMessage(msg);
 			              
-			    //		  ImageView view = (ImageView) findViewById(R.id.imageView);
-			    //		  view.setImageBitmap(createImage(place));
 			    		  if (!realtime) break;
 			    	  }  
 			      }
@@ -399,10 +405,11 @@ public class Online extends Activity implements OnTouchListener {
 		myThread.start();
 		}
 		
+		// função que calcula as probabilidade de cada local
 		private int[] KSDCalc() {
 			DTmg.open();
 			int[] place=new int[2];
-			Cursor c = DTmg.Local(new String[]{DataManager.Local.ID,DataManager.Local.PX,DataManager.Local.PY}, null);
+			Cursor c = DTmg.Local(new String[]{DataManager.Local.ID,DataManager.Local.PX,DataManager.Local.PY}, null); // cursor com os locais da base de dados
 			Cursor c2 = null;
 			String[] info = new String[]{DataManager.Access_Point.ID};
 			  
@@ -411,19 +418,17 @@ public class Online extends Activity implements OnTouchListener {
 			float maxprob = Float.NEGATIVE_INFINITY;
 			c.moveToFirst();
 			Cursor CC = DTmg.AP(new String[]{DataManager.Access_Point.NAME}, null);
-//			for(CC.moveToFirst();!CC.isAfterLast();CC.moveToNext())
-//				Log.d("AP NAME", CC.getString(0));
-			for (int l=0;!c.isAfterLast();l++){
+			for (int l=0;!c.isAfterLast();l++){ // Um loop para todos os locais
 				for (int i=0;i<100;i++){
 					if (PAsMEAN[i]==null) break;
-					c2 = DTmg.AP(info, DataManager.Access_Point.NAME + " == '" + PAsMEAN[i] + "'");
+					c2 = DTmg.AP(info, DataManager.Access_Point.NAME + " == '" + PAsMEAN[i] + "'"); // Verifica se o ponto de acesso capturado na varredura online existe no local em questão
 					if(c2.getCount()==0) break;
-		//			Log.d(TAG, PAsMEAN[i]);
 					
 					c2.moveToFirst();
 					probabilities[l] += Math.log(DTmg.KSDFunction(c.getLong(0), 
-							c2.getLong(0)).prob(PowersMEAN[i]));
+							c2.getLong(0)).prob(PowersMEAN[i])); // Calcula a probabilidade pelo KDE e usa o logaritimo
 			    }
+				// Maior probabilidade é onde o usuário está
 			   if (probabilities[l]>maxprob){
 				   place[0]=c.getInt(1);
 				   place[1]=c.getInt(2);
@@ -436,6 +441,8 @@ public class Online extends Activity implements OnTouchListener {
 		}
 
 	};
+	
+		// Marca com círculo vermelho a localização no mapa
 		private Bitmap createImage(int[] place) {
 			ImageView view = (ImageView) findViewById(R.id.imageView);
 			Bitmap bmp = ((BitmapDrawable)view.getDrawable()).getBitmap();
@@ -448,6 +455,7 @@ public class Online extends Activity implements OnTouchListener {
 	        return bmp2;
 		}
 
+		// Função de captura
 		private void acquire() {
 			numscan=1;
 			Settings.System.putInt(getContentResolver(),Settings.System.WIFI_SLEEP_POLICY,Settings.System.WIFI_SLEEP_POLICY_NEVER);
