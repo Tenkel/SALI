@@ -52,6 +52,7 @@ public class Online extends Activity implements OnTouchListener {
 	private int numscan=0;
 	private String[] PAsMEAN=new String[100];
 	private int[] PowersMEAN=new int[100];
+	private NumbersMEAN = new int[100];
 	private static final int STEP_ONE_COMPLETE = 0;
 	int[] place=new int[2];
 	
@@ -121,22 +122,29 @@ public class Online extends Activity implements OnTouchListener {
 		// Função que cria média das potencias recebidas durante os ciclos de varredura (para cada ponto de acesso)
 		private void RSSIMEAN(String[] pAs, int[] powers, int numscan,int index) {
 			int next=0;
+			int z;
 			for(int j=0;j<index;j++){
-				int cnt=0;
-				for (int z=0;z<100;z++){
+				for (z=0;z<100;z++){
+					
 					if (pAs[j].equals(PAsMEAN[z])){
-						PowersMEAN[z]=(PowersMEAN[z]+powers[j])/2;
+						PowersMEAN[z]*=NumbersMean[z];
+						PowersMEAN[z]+=powers[j];
+						NumbersMean[z]+=1;
+						PowersMEAN[z]/=NumbersMean[z];
+												
 						break;
 					}
-					else 
-						if(PAsMEAN[z]==null){
-							next=z;
-							cnt=100;
-							break;
-						}
-						else cnt++;
+
+					if(PAsMEAN[z]==null){
+						next=z;
+						z=100;
+						break;
+					}
+					
 				}
-				if (cnt==100){
+				//PowersMEAN[]
+				if (z==100){
+					NumbersMean[z]=1;
 					PAsMEAN[next]=pAs[j];
 					PowersMEAN[next]=powers[j];
 				}
