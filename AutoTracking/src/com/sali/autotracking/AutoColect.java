@@ -25,6 +25,7 @@ public class AutoColect extends Activity {
 
 	// Room
 	NumberPicker Room;
+	private ProgressBar LoopBar;
 
 	// Dialogs
 	private Chronometer chrono;
@@ -36,6 +37,7 @@ public class AutoColect extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_auto_colect);
+		LoopBar = (ProgressBar) HostAct.findViewById(R.id.progressBar1);
 		receiver = new LoopScanner(this);
 		Room = (NumberPicker) findViewById(R.id.numberPicker1);
 		Room.setMaxValue(100);
@@ -62,9 +64,13 @@ public class AutoColect extends Activity {
 						if (isChecked) {
 							chrono.setBase(SystemClock.elapsedRealtime());
 							chrono.start();
+							LoopBar.setVisibility(View.VISIBLE);
 							receiver.acquire();
 						} else {
 							chrono.stop();
+
+							// Stop loop animation.
+							LoopBar.setVisibility(View.INVISIBLE);
 							receiver.pause();
 						}
 

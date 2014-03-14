@@ -32,7 +32,6 @@ public class LoopScanner extends BroadcastReceiver implements
 
 	// Number of scan rounds
 	private int numscan;
-	private ProgressBar LoopBar;
 	// To be used as filter to get ONLY the wifi scan values, no other broadcasted information. 
 	private IntentFilter i;
 	// To use as context reference.
@@ -62,9 +61,8 @@ public class LoopScanner extends BroadcastReceiver implements
 	/*
 	 * Save the context reference and initialize all used variables.
 	 */
-	public LoopScanner(Activity Act) {
+	public LoopScanner(Context Act) {
 		HostAct = Act;
-		LoopBar = (ProgressBar) HostAct.findViewById(R.id.progressBar1);
 		nroom = 1;
 		regReceiver = false;
 		acc = 0;
@@ -111,9 +109,6 @@ public class LoopScanner extends BroadcastReceiver implements
 					Settings.System.WIFI_SLEEP_POLICY,
 					Settings.System.WIFI_SLEEP_POLICY_DEFAULT);
 		}
-
-		// Stop loop animation.
-		LoopBar.setVisibility(View.INVISIBLE);
 
 		DTmg.close();
 
@@ -225,7 +220,7 @@ public class LoopScanner extends BroadcastReceiver implements
 		HostAct.registerReceiver(this, i);
 		regReceiver = true;
 
-		LoopBar.setVisibility(View.VISIBLE);
+
 		Wmg.startScan();
 
 	}

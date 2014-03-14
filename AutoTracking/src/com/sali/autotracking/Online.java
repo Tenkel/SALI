@@ -378,7 +378,7 @@ public class Online extends Activity implements OnTouchListener {
 		}
 
 		private void KSDAlg(final boolean realtime) {
-			Runnable myRunnable = new Runnable() {
+			Thread myThread = new Thread() {
 			      public void run() {
 			    	  while(true){
 			    		  try {
@@ -409,7 +409,7 @@ public class Online extends Activity implements OnTouchListener {
 			    	  }  
 			      }
 			};
-		Thread myThread = new Thread(myRunnable);
+
 		myThread.start();
 		}
 		
