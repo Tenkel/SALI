@@ -23,8 +23,7 @@
         android:icon="@drawable/ic_launcher_2"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <activity
-            android:name="com.sali.autotracking.MainActivity">
+        <activity android:name="com.sali.autotracking.MainActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -48,6 +47,12 @@
             android:name="com.sali.autotracking.LoopColect"
             android:label="@string/title_activity_loop_colect" >
         </activity>
+
+        <service
+            android:name="com.sali.autotracking.Bridge"
+            android:enabled="false"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>

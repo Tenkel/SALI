@@ -59,6 +59,9 @@ public class Online extends Activity implements OnTouchListener {
 	// DB
 	private DataManager DTmg;
 	
+	// Services variables
+	boolean mBound = false;
+	
 	// Matrices to move and zoom image
 	ImageView view;
 	Matrix matrix = new Matrix();
@@ -364,9 +367,17 @@ public class Online extends Activity implements OnTouchListener {
     			editor.putInt("Algorithm", algchoice);
     			editor.commit();
     			
-    			// Inicializando o serviço responsável pela interface
-//    			Intent intent = new Intent(this, Bridge.class);
-//    			startService(intent);
+    			Thread bridge = new Thread(){
+    				public void run(){
+    				 bindService(
+    				        new Intent(Online.this, Bridge.class),
+    				        serviceConnection,
+    				        Context.BIND_AUTO_CREATE
+    				    );
+    				}
+    				};
+    			bridge.start();
+
     			
     			
     			// SelectAlgorithm(algchoice,realtime);
