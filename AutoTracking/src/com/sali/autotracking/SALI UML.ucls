@@ -82,7 +82,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="10" language="java" name="com.sali.autotracking.LoopScanner" project="AutoTracking" 
+  <class id="10" language="java" name="com.sali.dataAquisition.LoopScanner" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/LoopScanner.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="365" y="576"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 

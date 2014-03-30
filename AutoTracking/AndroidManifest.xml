@@ -53,6 +53,11 @@
             android:enabled="false"
             android:exported="false" >
         </service>
+        <service
+            android:name="com.sali.autotracking.KDEalg"
+            android:enabled="false"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>
