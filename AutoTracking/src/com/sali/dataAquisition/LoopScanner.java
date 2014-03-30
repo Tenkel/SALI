@@ -1,6 +1,12 @@
-package com.sali.autotracking;
+package com.sali.dataAquisition;
 
 import java.util.List;
+
+import com.sali.autotracking.DataManager;
+import com.sali.autotracking.Offline;
+import com.sali.autotracking.R;
+import com.sali.autotracking.R.id;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -16,11 +22,8 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.provider.Settings;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import com.sali.autotracking.R;
 
 /*
  * Class that implements the scanning loop, throwing the request and capturing the 
@@ -30,12 +33,14 @@ import com.sali.autotracking.R;
 public class LoopScanner extends BroadcastReceiver implements
 		SensorEventListener {
 
+	Scans host;
+	
 	// Number of scan rounds
 	private int numscan;
 	// To be used as filter to get ONLY the wifi scan values, no other broadcasted information. 
 	private IntentFilter i;
 	// To use as context reference.
-	private Activity HostAct;
+	private Context HostAct;
 	
 	// Sensor Accuracy, Geomagnetic(or orientation for backward compatibility) and Acceleration last values.
 	private SensorManager Smg;
@@ -61,8 +66,9 @@ public class LoopScanner extends BroadcastReceiver implements
 	/*
 	 * Save the context reference and initialize all used variables.
 	 */
-	public LoopScanner(Activity Act) {
+	public LoopScanner(Context Act, Scans h) {
 		HostAct = Act;
+		host=h;
 		nroom = 1;
 		regReceiver = false;
 		acc = 0;
@@ -94,10 +100,6 @@ public class LoopScanner extends BroadcastReceiver implements
 			HostAct.unregisterReceiver(this);
 		regReceiver = false;
 		Smg.unregisterListener(this);
-
-		// UI can sleep again
-		HostAct.getWindow().clearFlags(
-				WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		// Can Disconnect WIFI - Manage Deprecation.
 		if (android.os.Build.VERSION.SDK_INT >= 17) {
@@ -202,9 +204,6 @@ public class LoopScanner extends BroadcastReceiver implements
 		((TextView) HostAct.findViewById(R.id.textView2)).setText(String
 				.valueOf(numscan));
 
-		// UI can't sleep
-		HostAct.getWindow().addFlags(
-				WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		// Can't Disconnect from WIFI - Manage Deprecation.
 		if (android.os.Build.VERSION.SDK_INT >= 17) {

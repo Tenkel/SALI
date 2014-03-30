@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.CompoundButton;
@@ -19,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.ToggleButton;
 
 import com.sali.autotracking.R;
+import com.sali.dataAquisition.LoopScanner;
 
 public class AutoColect extends Activity {
 
@@ -66,11 +68,20 @@ public class AutoColect extends Activity {
 						if (isChecked) {
 							chrono.setBase(SystemClock.elapsedRealtime());
 							chrono.start();
+
+							// UI can't sleep
+							getWindow().addFlags(
+									WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+							
 							LoopBar.setVisibility(View.VISIBLE);
 							receiver.acquire();
 						} else {
 							chrono.stop();
 
+							// UI can sleep again
+							getWindow().clearFlags(
+									WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+							
 							// Stop loop animation.
 							LoopBar.setVisibility(View.INVISIBLE);
 							receiver.pause();
