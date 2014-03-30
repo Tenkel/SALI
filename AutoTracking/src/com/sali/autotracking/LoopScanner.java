@@ -61,7 +61,7 @@ public class LoopScanner extends BroadcastReceiver implements
 	/*
 	 * Save the context reference and initialize all used variables.
 	 */
-	public LoopScanner(Context Act) {
+	public LoopScanner(Activity Act) {
 		HostAct = Act;
 		nroom = 1;
 		regReceiver = false;

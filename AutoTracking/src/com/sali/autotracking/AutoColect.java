@@ -15,7 +15,9 @@ import android.widget.Chronometer;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.NumberPicker;
+import android.widget.ProgressBar;
 import android.widget.ToggleButton;
+
 import com.sali.autotracking.R;
 
 public class AutoColect extends Activity {
@@ -37,7 +39,7 @@ public class AutoColect extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_auto_colect);
-		LoopBar = (ProgressBar) HostAct.findViewById(R.id.progressBar1);
+		LoopBar = (ProgressBar) findViewById(R.id.progressBar1);
 		receiver = new LoopScanner(this);
 		Room = (NumberPicker) findViewById(R.id.numberPicker1);
 		Room.setMaxValue(100);

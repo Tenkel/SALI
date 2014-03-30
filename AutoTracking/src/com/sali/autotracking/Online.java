@@ -52,7 +52,7 @@ public class Online extends Activity implements OnTouchListener {
 	private int numscan=0;
 	private String[] PAsMEAN=new String[100];
 	private int[] PowersMEAN=new int[100];
-	private NumbersMEAN = new int[100];
+	private int[] NumbersMean = new int[100];
 	private static final int STEP_ONE_COMPLETE = 0;
 	int[] place=new int[2];
 	
@@ -365,8 +365,8 @@ public class Online extends Activity implements OnTouchListener {
     			editor.commit();
     			
     			// Inicializando o serviço responsável pela interface
-    			Intent intent = new Intent(this, Interface.class);
-    			startService(intent);
+//    			Intent intent = new Intent(this, Bridge.class);
+//    			startService(intent);
     			
     			
     			// SelectAlgorithm(algchoice,realtime);
