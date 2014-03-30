@@ -358,7 +358,18 @@ public class Online extends Activity implements OnTouchListener {
     			
     			RadioButton Algorithm = (RadioButton) f.findViewById(selectedID);
     			Toast.makeText(Online.this, Algorithm.getText(), Toast.LENGTH_SHORT).show();
-    			SelectAlgorithm(algchoice,realtime);
+    			
+    			SharedPreferences settings = getSharedPreferences(PREF,0);
+    			SharedPreferences.Editor editor = settings.edit();
+    			editor.putInt("Algorithm", algchoice);
+    			editor.commit();
+    			
+    			// Inicializando o serviço responsável pela interface
+    			Intent intent = new Intent(this, Interface.class);
+    			startService(intent);
+    			
+    			
+    			// SelectAlgorithm(algchoice,realtime);
     			break;
     		case DialogInterface.BUTTON_NEGATIVE:
     			break;	
