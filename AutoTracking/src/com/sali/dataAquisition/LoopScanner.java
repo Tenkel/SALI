@@ -2,17 +2,11 @@ package com.sali.dataAquisition;
 
 import java.util.List;
 
-import com.sali.autotracking.Offline;
-import com.sali.autotracking.R;
-import com.sali.autotracking.R.id;
-
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -21,8 +15,6 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.provider.Settings;
-import android.view.WindowManager;
-import android.widget.TextView;
 
 /*
  * Class that implements the scanning loop, throwing the request and capturing the 
@@ -32,55 +24,37 @@ import android.widget.TextView;
 public class LoopScanner extends BroadcastReceiver implements
 		SensorEventListener {
 
+	// Callback
 	Scans host;
-	// Loop Style
-	private final boolean save;
 	
-	// Number of scan rounds
-	private int numscan;
 	// To be used as filter to get ONLY the wifi scan values, no other broadcasted information. 
 	private IntentFilter i;
 	// To use as context reference.
-	private Context HostAct;
+	private Context hostContext;
 	
-	// Sensor Accuracy, Geomagnetic(or orientation for backward compatibility) and Acceleration last values.
+	// orientation last values.
 	private SensorManager Smg;
-	private int acc;
-	private float[] geomagv;
 	private float[] orientationv;
-	private float[] accelv;
 	
-	// Wifi module use.
+	// WiFi module use.
 	private WifiManager Wmg;
 	private boolean regReceiver;
-	
-	private int nroom;
-	private float mean;
 
-	public DataManager DTmg;
-
-	// Shared Variables
-	SharedPreferences settings;
-	SharedPreferences.Editor editor;
-	private static final String SAVESCAN = "numscan";
 
 	/*
 	 * Save the context reference and initialize all used variables.
 	 */
-	public LoopScanner(Context Act, Scans h) {
-		save=false;
-		HostAct = Act;
+	public LoopScanner(Context c, Scans h) {
+		
+		hostContext = c;
 		host=h;
-		nroom = 1;
 		regReceiver = false;
-		acc = 0;
-		DTmg = new DataManager(Act);
+
 		i = new IntentFilter();
 		i.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-		Wmg = (WifiManager) HostAct.getSystemService(Context.WIFI_SERVICE);
-		Smg = (SensorManager) HostAct.getSystemService(Context.SENSOR_SERVICE);
+		Wmg = (WifiManager) hostContext.getSystemService(Context.WIFI_SERVICE);
+		Smg = (SensorManager) hostContext.getSystemService(Context.SENSOR_SERVICE);
 
-		settings = HostAct.getSharedPreferences(Offline.PREF, 0);
 
 		registerSensor();
 	}
@@ -92,44 +66,33 @@ public class LoopScanner extends BroadcastReceiver implements
 	 * Stop, close and unregister what needed.
 	 */
 	public void pause() {
-		// Save number of scan rounds.
-		editor = settings.edit();
-		editor.putInt(SAVESCAN, nroom);
-		editor.commit();
 
-		// Unregister Wifi and Sensors.
+		// Unregister WiFi and Sensors.
 		if (regReceiver)
-			HostAct.unregisterReceiver(this);
+			hostContext.unregisterReceiver(this);
 		regReceiver = false;
 		Smg.unregisterListener(this);
 
 		// Can Disconnect WIFI - Manage Deprecation.
 		if (android.os.Build.VERSION.SDK_INT >= 17) {
-			Settings.Global.putInt(HostAct.getContentResolver(),
+			Settings.Global.putInt(hostContext.getContentResolver(),
 					Settings.Global.WIFI_SLEEP_POLICY,
 					Settings.Global.WIFI_SLEEP_POLICY_DEFAULT);
 		} else {
-			Settings.System.putInt(HostAct.getContentResolver(),
+			Settings.System.putInt(hostContext.getContentResolver(),
 					Settings.System.WIFI_SLEEP_POLICY,
 					Settings.System.WIFI_SLEEP_POLICY_DEFAULT);
 		}
 
-		DTmg.close();
 
-	}
-
-	public int getroom() {
-		return nroom;
 	}
 
 	public void start() {
 
-		//load number of scan rounds.
-		nroom = settings.getInt(SAVESCAN, 1);
-
 		registerSensor();
 	}
 
+	
 	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	/*
 	 * Manage rotation sensor deprecation.
@@ -138,40 +101,22 @@ public class LoopScanner extends BroadcastReceiver implements
 
 		Smg.unregisterListener(this);
 
-		if (android.os.Build.VERSION.SDK_INT >= 9) {
-			Sensor orientation = Smg.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+		Sensor orientation = Smg.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+		
+		Smg.registerListener(this, orientation,SensorManager.SENSOR_DELAY_GAME);
 			
-			Smg.registerListener(this, orientation,SensorManager.SENSOR_DELAY_GAME);
-			
-		} else {
-			Sensor geomag = Smg.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-			Sensor accel = Smg.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-			
-			Smg.registerListener(this, geomag, SensorManager.SENSOR_DELAY_GAME);
-			Smg.registerListener(this, accel, SensorManager.SENSOR_DELAY_GAME);
-		}
+
 
 	}
 
-	/*
-	 * Set actual room.
-	 */
-	public void setroom(int value) {
-		nroom = value;
-		DTmg.open();
-		mean = DTmg.NSamplesmean(nroom);
-		DTmg.close();
-		((TextView) HostAct.findViewById(R.id.textView1)).setText(String
-				.valueOf(mean));
-	}
+
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		acc = accuracy;
+		if(accuracy< SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM)
+			host.calibrateSensor();
 	}
 
 	/*
-	 * (non-Javadoc)
-	 * @see android.hardware.SensorEventListener#onSensorChanged(android.hardware.SensorEvent)
 	 * 
 	 * Save values when it changes.
 	 * 
@@ -181,12 +126,6 @@ public class LoopScanner extends BroadcastReceiver implements
 
 		case Sensor.TYPE_ROTATION_VECTOR:
 			orientationv = (float[]) event.values.clone();
-			break;
-		case Sensor.TYPE_ACCELEROMETER:
-			accelv = (float[]) event.values.clone();
-			break;
-		case Sensor.TYPE_MAGNETIC_FIELD:
-			geomagv = (float[]) event.values.clone();
 			break;
 
 		default:
@@ -202,23 +141,18 @@ public class LoopScanner extends BroadcastReceiver implements
 	 */
 	public void acquire() {
 
-		numscan = 0;
-		((TextView) HostAct.findViewById(R.id.textView2)).setText(String
-				.valueOf(numscan));
-
-
 		// Can't Disconnect from WIFI - Manage Deprecation.
 		if (android.os.Build.VERSION.SDK_INT >= 17) {
-			Settings.Global.putInt(HostAct.getContentResolver(),
+			Settings.Global.putInt(hostContext.getContentResolver(),
 					Settings.Global.WIFI_SLEEP_POLICY,
 					Settings.Global.WIFI_SLEEP_POLICY_NEVER);
 		} else {
-			Settings.System.putInt(HostAct.getContentResolver(),
+			Settings.System.putInt(hostContext.getContentResolver(),
 					Settings.System.WIFI_SLEEP_POLICY,
 					Settings.System.WIFI_SLEEP_POLICY_NEVER);
 		}
 
-		HostAct.registerReceiver(this, i);
+		hostContext.registerReceiver(this, i);
 		regReceiver = true;
 
 
@@ -239,30 +173,6 @@ public class LoopScanner extends BroadcastReceiver implements
 		
 
 		List<ScanResult> results = Wmg.getScanResults();
-		
-		if(save){
-			DTmg.open();
-			for (ScanResult result : results) {
-				DTmg.insert(result.level, result.BSSID, nroom, nroom, nroom, gyrox,
-						gyroy, gyroz, acc);
-			}
-
-			// Shared that DB has new entry
-			editor = settings.edit();
-			editor.putBoolean("warmed", false);
-			editor.commit();
-
-			mean = DTmg.NSamplesmean(nroom);
-
-			DTmg.close();
-		}
-
-		numscan += 1;
-
-		((TextView) HostAct.findViewById(R.id.textView2)).setText(String
-				.valueOf(numscan));
-		((TextView) HostAct.findViewById(R.id.textView1)).setText(String
-				.valueOf(mean));
 
 		Wmg.startScan();
 		
@@ -271,6 +181,29 @@ public class LoopScanner extends BroadcastReceiver implements
 	}
 
 }
+
+
+
+
+//private float[] geomagv;
+//private float[] accelv;
+
+//} else {
+//Sensor geomag = Smg.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+//Sensor accel = Smg.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+//
+//Smg.registerListener(this, geomag, SensorManager.SENSOR_DELAY_GAME);
+//Smg.registerListener(this, accel, SensorManager.SENSOR_DELAY_GAME);
+//}
+
+
+//case Sensor.TYPE_ACCELEROMETER:
+//	accelv = (float[]) event.values.clone();
+//	break;
+//case Sensor.TYPE_MAGNETIC_FIELD:
+//	geomagv = (float[]) event.values.clone();
+//	break;
+
 
 
 /*			IF 		android.os.Build.VERSION.SDK_INT < 9

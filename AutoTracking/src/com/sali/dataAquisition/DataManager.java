@@ -69,7 +69,7 @@ public class DataManager {
 		public static final String GYROX = "Vi_gyrox";
 		public static final String GYROY = "Vi_gyroy";
 		public static final String GYROZ = "Vi_gyroz";
-		public static final String GYROAC = "Vi_gyro_accuracy";
+//		public static final String GYROAC = "Vi_gyro_accuracy";
 		public static final String LOCAL = "Cd_local";
 		public static final String AP = "Cd_access_point";
 	}
@@ -133,8 +133,9 @@ public class DataManager {
 			db.execSQL("CREATE TABLE " + SampleTable + "(" + Sample.ID
 					+ " INTEGER PRIMARY KEY AUTOINCREMENT, " + Sample.VALUE
 					+ " INTEGER," + Sample.GYROX + " REAL," + Sample.GYROY
-					+ " REAL," + Sample.GYROZ + " REAL," + Sample.GYROAC
-					+ " INTEGER," + Sample.LOCAL + " INTEGER," + Sample.AP
+					+ " REAL," + Sample.GYROZ + " REAL," 
+//					+ Sample.GYROAC	+ " INTEGER," 
+					+ Sample.LOCAL + " INTEGER," + Sample.AP
 					+ " INTEGER," + "FOREIGN KEY(" + Sample.LOCAL
 					+ ") REFERENCES " + KSDTable + "(" + KSD.ID_LOCAL + "),"
 					+ "FOREIGN KEY(" + Sample.AP + ") REFERENCES " + KSDTable
@@ -177,7 +178,7 @@ public class DataManager {
 	 */
 
 	public void insert(int power, String APcode, int localX, int localY,
-			int room, float gyrox, float gyroy, float gyroz, int gyroac) {
+			int room, float gyrox, float gyroy, float gyroz/*, int gyroac*/) {
 		long localid, apid;
 
 		// Local
@@ -221,7 +222,7 @@ public class DataManager {
 		entry.put(Sample.GYROX, gyrox);
 		entry.put(Sample.GYROY, gyroy);
 		entry.put(Sample.GYROZ, gyroz);
-		entry.put(Sample.GYROAC, gyroac);
+//		entry.put(Sample.GYROAC, gyroac);
 		entry.put(Sample.LOCAL, localid);
 		entry.put(Sample.AP, apid);
 		DBFind.insert(SampleTable, null, entry);
