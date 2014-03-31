@@ -12,7 +12,11 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.provider.Settings;
 
 public class Bridge extends Service implements Scans {
@@ -21,10 +25,17 @@ public class Bridge extends Service implements Scans {
 	SharedPreferences settings = getSharedPreferences(PREF,0);
 	int algchoice = settings.getInt("Algorithm",0);
 	
-	public Bridge() {
-		
-	}
-
+	class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            
+        	Bundle data = msg.getData();        	
+        	String dataString = data.getString("MyString");
+        }
+     }
+	
+	final Messenger myMessenger = new Messenger(new IncomingHandler());
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		
@@ -41,13 +52,13 @@ public class Bridge extends Service implements Scans {
 			};
 		kdealg.start();
 		
+		
 		}
 		
-		// TODO: Return the communication channel to the service.
-		throw new UnsupportedOperationException("Not yet implemented");
+		return myMessenger.getBinder();
 	}
 	
-	public void processScans(List<ScanResult> results) {
+	public void processScans(List<ScanResult> results, float gyrox, float gyroy, float gyroz) {
 		// TODO Auto-generated method stub
 		
 	}

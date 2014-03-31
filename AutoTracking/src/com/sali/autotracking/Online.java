@@ -7,16 +7,20 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
 import android.provider.Settings;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -64,6 +68,8 @@ public class Online extends Activity implements OnTouchListener {
 	
 	// Services variables
 	boolean mBound = false;
+	Messenger mService = null;
+
 	
 	// Matrices to move and zoom image
 	ImageView view;
@@ -370,18 +376,16 @@ public class Online extends Activity implements OnTouchListener {
     			editor.putInt("Algorithm", algchoice);
     			editor.commit();
     			
-    			Thread bridge = new Thread(){
+    		    Thread bridge = new Thread(){
     				public void run(){
     				 bindService(
     				        new Intent(Online.this, Bridge.class),
-    				        serviceConnection,
+    				        mConnection,
     				        Context.BIND_AUTO_CREATE
     				    );
     				}
     				};
     			bridge.start();
-
-    			
     			
     			// SelectAlgorithm(algchoice,realtime);
     			break;
@@ -391,7 +395,8 @@ public class Online extends Activity implements OnTouchListener {
 	    		}
 	    	}
 
-		private void SelectAlgorithm(int algchoice, boolean realtime) {
+		
+	    private void SelectAlgorithm(int algchoice, boolean realtime) {
 			
 			switch(algchoice){
 			case 1:
@@ -499,6 +504,36 @@ public class Online extends Activity implements OnTouchListener {
 			w.startScan();
 			
 		}
+		
+		
+		// Communication With Service
+		private ServiceConnection mConnection = new ServiceConnection() {
+			public void onServiceConnected(ComponentName name, IBinder service) {
+				 //  We are communicating with the service using a Messenger, so here we get a client-side
+	            // representation of that from the raw IBinder object.
+	            mService = new Messenger(service);
+	            mBound = true;
+				
+			}
+			public void onServiceDisconnected(ComponentName name) {
+	            // This is called when the connection with the service has been
+	            // unexpectedly disconnected -- that is, its process crashed.
+	            mService = null;
+	            mBound = false;
+				
+			}
+	    };
+		
+		@Override
+	    protected void onStop() {
+	        super.onStop();
+	        // Unbind from the service
+	        if (mBound) {
+	            unbindService(mConnection);
+	            mBound = false;
+	        }
+	    }
+
 
 
 }
