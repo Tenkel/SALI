@@ -1,4 +1,4 @@
-package com.sali.autotracking;
+package com.sali.algorithms;
 
 import java.io.File;
 import java.io.FileInputStream;

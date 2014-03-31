@@ -2,6 +2,7 @@ package com.sali.autotracking;
 
 import java.util.List;
 
+import com.sali.algorithms.KDEalg;
 import com.sali.dataAquisition.Scans;
 
 import android.app.Service;

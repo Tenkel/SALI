@@ -1,4 +1,4 @@
-package com.sali.autotracking;
+package com.sali.algorithms;
 
 import android.app.Service;
 import android.content.Intent;

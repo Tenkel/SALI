@@ -1,6 +1,7 @@
 package com.sali.autotracking;
 
 import java.util.List;
+
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -42,6 +43,8 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
+
+import com.sali.algorithms.DataManager;
 import com.sali.autotracking.R;
 
 public class Online extends Activity implements OnTouchListener {

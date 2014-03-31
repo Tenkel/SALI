@@ -1,8 +1,11 @@
 package com.sali.autotracking;
 
+import java.util.List;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.net.wifi.ScanResult;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.InputType;
@@ -19,10 +22,10 @@ import android.widget.NumberPicker;
 import android.widget.ProgressBar;
 import android.widget.ToggleButton;
 
-import com.sali.autotracking.R;
 import com.sali.dataAquisition.LoopScanner;
+import com.sali.dataAquisition.Scans;
 
-public class AutoColect extends Activity {
+public class AutoColect extends Activity implements Scans {
 
 	// Shared Variables
 	public static final String PREF = "ZoomPref";
@@ -184,6 +187,11 @@ public class AutoColect extends Activity {
 		alert.show();
 		
 		return super.onOptionsItemSelected(item);
+	}
+
+	public void processScans(List<ScanResult> results) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

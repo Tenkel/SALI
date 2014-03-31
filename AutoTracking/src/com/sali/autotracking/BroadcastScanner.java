@@ -1,6 +1,7 @@
 package com.sali.autotracking;
 
 import java.util.List;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -20,6 +21,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+
+import com.sali.algorithms.DataManager;
 import com.sali.autotracking.R;
 
 @SuppressLint({ "InlinedApi", "NewApi" })
