@@ -33,6 +33,8 @@ public class LoopScanner extends BroadcastReceiver implements
 		SensorEventListener {
 
 	Scans host;
+	// Loop Style
+	private final boolean save;
 	
 	// Number of scan rounds
 	private int numscan;
@@ -66,6 +68,7 @@ public class LoopScanner extends BroadcastReceiver implements
 	 * Save the context reference and initialize all used variables.
 	 */
 	public LoopScanner(Context Act, Scans h) {
+		save=false;
 		HostAct = Act;
 		host=h;
 		nroom = 1;
@@ -225,59 +228,34 @@ public class LoopScanner extends BroadcastReceiver implements
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	@Override
-	/*
-	 * (non-Javadoc)
-	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
-	 * 
-	 * Save data to the database when received, then re-start the cycle. 
-	 * 
+	/* 
+	 * Save data to the database when received, then re-start the cycle.
 	 */
 	public void onReceive(Context c, Intent i) {
 
-		float gyrox = 0;
-		float gyroy = 0;
-		float gyroz = 0;
+		float gyrox = orientationv[0];
+		float gyroy = orientationv[1];
+		float gyroz = orientationv[2];
+		
 
-		if (android.os.Build.VERSION.SDK_INT >= 9) {
-			gyrox = orientationv[0];
-			gyroy = orientationv[1];
-			gyroz = orientationv[2];
-		} else {
-			float[] R = new float[9];
-			//Converts the Rotation Matrix to the quaternion notation and stores the tree first values (the forth is consequence).
-			SensorManager.getRotationMatrix(R, null, accelv, geomagv);
-			gyrox = (float) Math.abs(0.5 * Math.sqrt(1 + R[0] - R[4] - R[8]))
-					* Math.signum(R[7] - R[5]);
-			gyroy = (float) Math.abs(0.5 * Math.sqrt(1 - R[0] + R[4] - R[8]))
-					* Math.signum(R[2] - R[6]);
-			gyroz = (float) Math.abs(0.5 * Math.sqrt(1 - R[0] - R[4] + R[8]))
-					* Math.signum(R[3] - R[1]);
-		}
-
-		DTmg.open();
 		List<ScanResult> results = Wmg.getScanResults();
-		for (ScanResult result : results) {
-			DTmg.insert(result.level, result.BSSID, nroom, nroom, nroom, gyrox,
-					gyroy, gyroz, acc);
+		
+		if(save){
+			DTmg.open();
+			for (ScanResult result : results) {
+				DTmg.insert(result.level, result.BSSID, nroom, nroom, nroom, gyrox,
+						gyroy, gyroz, acc);
+			}
+
+			// Shared that DB has new entry
+			editor = settings.edit();
+			editor.putBoolean("warmed", false);
+			editor.commit();
+
+			mean = DTmg.NSamplesmean(nroom);
+
+			DTmg.close();
 		}
-
-		// DUPLICATE ENTRY - add actual connection twice sometimes.
-		//
-		// WifiInfo actual_connection = Wmg.getConnectionInfo ();
-		// if (actual_connection.getNetworkId()!=-1){
-		// DTmg.insert(actual_connection.getRssi(),
-		// actual_connection.getBSSID(),nroom,nroom,nroom, gyrox, gyroy, gyroz,
-		// acc);
-		// }
-
-		// Shared that DB has new entry
-		editor = settings.edit();
-		editor.putBoolean("warmed", false);
-		editor.commit();
-
-		mean = DTmg.NSamplesmean(nroom);
-
-		DTmg.close();
 
 		numscan += 1;
 
@@ -287,7 +265,33 @@ public class LoopScanner extends BroadcastReceiver implements
 				.valueOf(mean));
 
 		Wmg.startScan();
+		
+		host.processScans(results,gyrox,gyroy,gyroz);
 
 	}
 
 }
+
+
+/*			IF 		android.os.Build.VERSION.SDK_INT < 9
+ * 
+ * 			float[] R = new float[9];
+			//Converts the Rotation Matrix to the quaternion notation and stores the tree first values (the forth is consequence).
+			SensorManager.getRotationMatrix(R, null, accelv, geomagv);
+			gyrox = (float) Math.abs(0.5 * Math.sqrt(1 + R[0] - R[4] - R[8]))
+					* Math.signum(R[7] - R[5]);
+			gyroy = (float) Math.abs(0.5 * Math.sqrt(1 - R[0] + R[4] - R[8]))
+					* Math.signum(R[2] - R[6]);
+			gyroz = (float) Math.abs(0.5 * Math.sqrt(1 - R[0] - R[4] + R[8]))
+					* Math.signum(R[3] - R[1]);*/
+
+
+
+// DUPLICATE ENTRY - add actual connection twice sometimes.
+//
+// WifiInfo actual_connection = Wmg.getConnectionInfo ();
+// if (actual_connection.getNetworkId()!=-1){
+// DTmg.insert(actual_connection.getRssi(),
+// actual_connection.getBSSID(),nroom,nroom,nroom, gyrox, gyroy, gyroz,
+// acc);
+// }
