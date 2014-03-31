@@ -12,11 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.wifi.ScanResult;
@@ -26,7 +22,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.FloatMath;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +34,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
-import com.sali.autotracking.R;
 import com.sali.dataAquisition.DataManager;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -78,14 +72,14 @@ public class Offline extends Activity implements OnTouchListener {
 			// Gera uma Matriz com os resultados
 			// Colunas: Potencia do sinal, BSSID (MAC do ponto de acesso), X, Y (posições no mapa), nroom (Número do quarto)
 			for (ScanResult result : results) {
-				DTmg.insert(result.level,result.BSSID,(int) relativeX,(int) relativeY, nroom, 0, 0, 0, 0);
+				DTmg.insert(result.level,result.BSSID,(int) relativeX,(int) relativeY, nroom, 0, 0, 0);
 			}
 			
 			// Antes de sair da função, força a captura dos dados do ponto de acesso ao qual está conectado
 			// se não estiver conectado a nenhum, sai da função normalmente
 			WifiInfo actual_connection = w.getConnectionInfo ();
 			if (actual_connection.getNetworkId()!=-1){
-			DTmg.insert(actual_connection.getRssi(), actual_connection.getBSSID(),(int) relativeX,(int) relativeY, nroom, 0, 0, 0, 0);
+			DTmg.insert(actual_connection.getRssi(), actual_connection.getBSSID(),(int) relativeX,(int) relativeY, nroom, 0, 0, 0);
 		}
 			DTmg.close();
 
@@ -169,8 +163,8 @@ public class Offline extends Activity implements OnTouchListener {
 	double tdist=0;
 	
 	// Display Variables
-	private int displayWidth;
-	private int displayHeight;
+//	private int displayWidth;
+//	private int displayHeight;
 	private int imageWidth;
 	private int imageHeight;
 	private int rimageWidth;
@@ -190,7 +184,7 @@ public class Offline extends Activity implements OnTouchListener {
 
 	
 	// Debug Variables
-	private static final String TAG = "Touch";
+//	private static final String TAG = "Touch";
 	
 	// Inicialização da atividade
     @Override
@@ -212,9 +206,9 @@ public class Offline extends Activity implements OnTouchListener {
 		
         setContentView(R.layout.activity_offline);
         ImageView view = (ImageView) findViewById(R.id.imageView);
-        Display d = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        displayWidth=d.getWidth(); // Verificando dimensões originais da planta
-        displayHeight=d.getHeight();
+//        Display d = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+//        displayWidth=d.getWidth(); // Verificando dimensões originais da planta
+//        displayHeight=d.getHeight();
         bd = (BitmapDrawable) this.getResources().getDrawable(R.drawable.quarto);
         imageWidth = bd.getBitmap().getWidth();
         imageHeight = bd.getBitmap().getHeight();
@@ -294,8 +288,8 @@ public class Offline extends Activity implements OnTouchListener {
 			translateX = event.getX() - start.x;
 			translateY = event.getY() - start.y;
 			tdist+=Math.sqrt(Math.pow(translateX,2)+Math.pow(translateY,2));
-			float reltransX = previous.x+translateX;
-			float reltransY = previous.y+translateY;
+//			float reltransX = previous.x+translateX;
+//			float reltransY = previous.y+translateY;
 			if (mode == DRAG){
 				matrix.set(savedMatrix);
 				matrix.postTranslate(translateX, translateY);			
@@ -364,7 +358,7 @@ public class Offline extends Activity implements OnTouchListener {
 	private float spacing(MotionEvent event) {
 		float x = event.getX(0) - event.getX(1);
 		float y = event.getY(0) - event.getY(1);
-		return FloatMath.sqrt(x * x + y * y);
+		return (float) Math.sqrt(x * x + y * y);
 	}
 
 	// Dialog com o usuário para saber o quarto da captura
@@ -412,7 +406,7 @@ public class Offline extends Activity implements OnTouchListener {
 	};
 
 		// Mostra na planta um círculo verde, indicando onde está sendo realizada a captura
-		private Bitmap createImage() {
+	/*	private Bitmap createImage() {
 			ImageView view = (ImageView) findViewById(R.id.imageView);
 			Bitmap bmp = ((BitmapDrawable)view.getDrawable()).getBitmap();
 			Bitmap bmp2 = bmp.copy(bmp.getConfig(),true);
@@ -422,7 +416,7 @@ public class Offline extends Activity implements OnTouchListener {
 	        paint.setColor(Color.GREEN);
 	        canvas.drawCircle(relativeX, relativeY, 10, paint);
 	        return bmp2;
-		}
+		}*/
 		
 		
 

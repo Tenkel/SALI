@@ -32,7 +32,6 @@ public class BroadcastScanner extends BroadcastReceiver implements SensorEventLi
 	private LinearLayout linProgressBar;
 	private IntentFilter i;
 	private Activity HostAct;
-	private int acc;
 	private float[] geomagv;
 	private float[] accelv;
 	private float[] orientationv;
@@ -55,7 +54,7 @@ public class BroadcastScanner extends BroadcastReceiver implements SensorEventLi
 		nroom=1;	
 		regReceiver=false;
 		BUSY=false;
-		acc=0;
+
         DTmg = new DataManager(Act);
         i = new IntentFilter();
 		i.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
@@ -132,11 +131,11 @@ public class BroadcastScanner extends BroadcastReceiver implements SensorEventLi
 		DTmg.open();
 		List<ScanResult> results = Wmg.getScanResults();
 		for (ScanResult result : results) {
-			DTmg.insert(result.level,result.BSSID,nroom,nroom,nroom, gyrox, gyroy, gyroz, acc);
+			DTmg.insert(result.level,result.BSSID,nroom,nroom,nroom, gyrox, gyroy, gyroz);
 		}
 		WifiInfo actual_connection = Wmg.getConnectionInfo ();
 		if (actual_connection.getNetworkId()!=-1){
-		DTmg.insert(actual_connection.getRssi(), actual_connection.getBSSID(),nroom,nroom,nroom, gyrox, gyroy, gyroz, acc);
+		DTmg.insert(actual_connection.getRssi(), actual_connection.getBSSID(),nroom,nroom,nroom, gyrox, gyroy, gyroz);
 	}
 		DTmg.close();
 
@@ -199,7 +198,7 @@ public class BroadcastScanner extends BroadcastReceiver implements SensorEventLi
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		acc = accuracy;
+
 	}
 
 	public void onSensorChanged(SensorEvent event) {
