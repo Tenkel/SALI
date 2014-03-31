@@ -62,5 +62,10 @@ public class Bridge extends Service implements Scans {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public void calibrateSensor() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
