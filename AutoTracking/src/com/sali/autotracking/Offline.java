@@ -39,8 +39,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
-import com.sali.algorithms.DataManager;
 import com.sali.autotracking.R;
+import com.sali.dataAquisition.DataManager;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class Offline extends Activity implements OnTouchListener {

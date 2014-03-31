@@ -28,7 +28,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="4" language="java" name="com.sali.algorithms.DataManager.Local" project="AutoTracking" 
+  <class id="4" language="java" name="com.sali.dataAquisition.DataManager.Local" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/DataManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="987" y="1190"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
@@ -37,7 +37,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="5" language="java" name="com.sali.algorithms.DataManager.DBMng" project="AutoTracking" 
+  <class id="5" language="java" name="com.sali.dataAquisition.DataManager.DBMng" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/DataManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="605" y="1384"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
@@ -46,7 +46,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="6" language="java" name="com.sali.algorithms.DataManager" project="AutoTracking" 
+  <class id="6" language="java" name="com.sali.dataAquisition.DataManager" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/DataManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="658" y="1057"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
@@ -55,7 +55,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="7" language="java" name="com.sali.algorithms.DataManager.Sample" project="AutoTracking" 
+  <class id="7" language="java" name="com.sali.dataAquisition.DataManager.Sample" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/DataManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="329" y="1168"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
@@ -64,7 +64,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="8" language="java" name="com.sali.algorithms.DataManager.Access_Point" project="AutoTracking" 
+  <class id="8" language="java" name="com.sali.dataAquisition.DataManager.Access_Point" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/DataManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="855" y="1394"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
@@ -73,7 +73,7 @@
       <operations public="true" package="false" protected="false" private="false" static="true"/>    
     </display>  
   </class>  
-  <class id="9" language="java" name="com.sali.algorithms.DataManager.KSD" project="AutoTracking" 
+  <class id="9" language="java" name="com.sali.dataAquisition.DataManager.KSD" project="AutoTracking" 
     file="/AutoTracking/src/com/sali/autotracking/DataManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="352" y="1387"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 

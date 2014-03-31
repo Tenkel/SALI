@@ -22,8 +22,8 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
-import com.sali.algorithms.DataManager;
 import com.sali.autotracking.R;
+import com.sali.dataAquisition.DataManager;
 
 @SuppressLint({ "InlinedApi", "NewApi" })
 public class BroadcastScanner extends BroadcastReceiver implements SensorEventListener {

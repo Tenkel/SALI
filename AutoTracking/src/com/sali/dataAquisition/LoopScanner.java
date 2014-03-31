@@ -2,7 +2,6 @@ package com.sali.dataAquisition;
 
 import java.util.List;
 
-import com.sali.algorithms.DataManager;
 import com.sali.autotracking.Offline;
 import com.sali.autotracking.R;
 import com.sali.autotracking.R.id;

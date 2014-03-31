@@ -44,8 +44,8 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import com.sali.algorithms.DataManager;
 import com.sali.autotracking.R;
+import com.sali.dataAquisition.DataManager;
 
 public class Online extends Activity implements OnTouchListener {
 

@@ -11,8 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.sali.algorithms.DataManager;
 import com.sali.autotracking.R;
+import com.sali.dataAquisition.DataManager;
 
 public class MainActivity extends Activity {
 	

@@ -1,4 +1,4 @@
-package com.sali.algorithms;
+package com.sali.dataAquisition;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +12,8 @@ import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+
+import com.sali.algorithms.KDE;
 
 import android.content.ContentValues;
 import android.content.Context;
