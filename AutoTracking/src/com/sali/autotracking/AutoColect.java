@@ -5,6 +5,7 @@ import java.util.List;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -20,8 +21,10 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.sali.dataAquisition.DataManager;
 import com.sali.dataAquisition.LoopScanner;
 import com.sali.dataAquisition.Scans;
 
@@ -30,6 +33,12 @@ public class AutoColect extends Activity implements Scans {
 	// Shared Variables
 	public static final String PREF = "ZoomPref";
 
+	// Number of scan rounds
+	private int numscan;
+	
+	private int nroom;
+	private float mean;
+	
 	// Room
 	NumberPicker Room;
 	private ProgressBar LoopBar;
@@ -37,27 +46,40 @@ public class AutoColect extends Activity implements Scans {
 	// Dialogs
 	private Chronometer chrono;
 
-	// Wifi Variables
+	// WiFi Variables
 	LoopScanner receiver;
+
+	private DataManager DTmg;
+
+	// Shared Variables
+	SharedPreferences settings;
+	SharedPreferences.Editor editor;
+	private static final String SAVESCAN = "numscan";
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_auto_colect);
 		LoopBar = (ProgressBar) findViewById(R.id.progressBar1);
-		receiver = new LoopScanner(this);
+		
+		receiver = new LoopScanner(this, this);
+		settings = getSharedPreferences(Offline.PREF, 0);
+		nroom = 1;
+		DTmg = new DataManager(this);
+		
 		Room = (NumberPicker) findViewById(R.id.numberPicker1);
 		Room.setMaxValue(100);
 		Room.setMinValue(1);
 		Log.d("AC", "before Nrooms");
-		receiver.DTmg.open();
-		int nrooms=(int) receiver.DTmg.NRooms();
-		receiver.DTmg.close();
+		DTmg.open();
+		int nrooms=(int) DTmg.NRooms();
+		DTmg.close();
 		if(nrooms<1)
 			nrooms=1;
 		Log.d("AC", "after Nrooms");
 		Room.setValue(nrooms);
-		receiver.setroom(nrooms);
+		setroom(nrooms);
 		
 
 		chrono = (Chronometer) findViewById(R.id.chronometer1);
@@ -70,6 +92,9 @@ public class AutoColect extends Activity implements Scans {
 							boolean isChecked) {
 						if (isChecked) {
 							chrono.setBase(SystemClock.elapsedRealtime());
+
+							//load number of scan rounds.
+							nroom = settings.getInt(SAVESCAN, 1);
 							chrono.start();
 
 							// UI can't sleep
@@ -77,6 +102,12 @@ public class AutoColect extends Activity implements Scans {
 									WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 							
 							LoopBar.setVisibility(View.VISIBLE);
+							
+
+							numscan = 0;
+							((TextView) findViewById(R.id.textView2)).setText(String
+									.valueOf(numscan));
+							
 							receiver.acquire();
 						} else {
 							chrono.stop();
@@ -97,7 +128,7 @@ public class AutoColect extends Activity implements Scans {
 		Room.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
 			
 			public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-				receiver.setroom(newVal);
+				setroom(newVal);
 				
 			}
 		});
@@ -111,14 +142,14 @@ public class AutoColect extends Activity implements Scans {
 				AlertDialog.Builder alert = new AlertDialog.Builder(v.getContext());
 
 				alert.setTitle("Confirm");
-				alert.setMessage("Sure want to delete room "+receiver.getroom()+" ?");
+				alert.setMessage("Sure want to delete room "+getroom()+" ?");
 
 				alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int whichButton) {
-					receiver.DTmg.open();
-					receiver.DTmg.deleteroom(receiver.getroom());
-					receiver.DTmg.close();
-					receiver.setroom(receiver.getroom());
+					DTmg.open();
+					DTmg.deleteroom(getroom());
+					DTmg.close();
+					setroom(getroom());
 				  }
 				});
 
@@ -139,13 +170,23 @@ public class AutoColect extends Activity implements Scans {
 
 	@Override
 	protected void onPause() {
+		// Save number of scan rounds.
+		editor = settings.edit();
+		editor.putInt(SAVESCAN, nroom);
+		editor.commit();
+		
 		receiver.pause();
+		DTmg.close();
+		
 		chrono.stop();
 		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
+
+		//load number of scan rounds.
+		nroom = settings.getInt(SAVESCAN, 1);
 		receiver.start();
 		super.onResume();
 	}
@@ -189,7 +230,50 @@ public class AutoColect extends Activity implements Scans {
 		return super.onOptionsItemSelected(item);
 	}
 
-	public void processScans(List<ScanResult> results) {
+	public int getroom() {
+		return nroom;
+	}	
+	
+	/*
+	 * Set actual room.
+	 */
+	public void setroom(int value) {
+		nroom = value;
+		DTmg.open();
+		mean = DTmg.NSamplesmean(nroom);
+		DTmg.close();
+		((TextView) findViewById(R.id.textView1)).setText(String
+				.valueOf(mean));
+	}
+
+	public void processScans(List<ScanResult> results, float gyrox,
+			float gyroy, float gyroz) {
+		DTmg.open();
+		for (ScanResult result : results) {
+			DTmg.insert(result.level, result.BSSID, nroom, nroom, nroom, gyrox,
+					gyroy, gyroz);
+		}
+
+		// Shared that DB has new entry
+		editor = settings.edit();
+		editor.putBoolean("warmed", false);
+		editor.commit();
+
+		mean = DTmg.NSamplesmean(nroom);
+
+		DTmg.close();
+		
+		numscan += 1;
+
+		((TextView) findViewById(R.id.textView2)).setText(String
+				.valueOf(numscan));
+		((TextView) findViewById(R.id.textView1)).setText(String
+				.valueOf(mean));
+
+		
+	}
+
+	public void calibrateSensor() {
 		// TODO Auto-generated method stub
 		
 	}
