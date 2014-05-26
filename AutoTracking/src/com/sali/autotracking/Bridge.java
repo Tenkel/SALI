@@ -9,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
@@ -43,7 +44,8 @@ public class Bridge extends Service implements Scans {
 		case 1:
 		Thread kdealg = new Thread(){
 			public void run(){
-			 bindService(
+			 ServiceConnection serviceConnection = null;
+			bindService(
 			        new Intent(Bridge.this, KDEalg.class),
 			        serviceConnection,
 			        Context.BIND_AUTO_CREATE
