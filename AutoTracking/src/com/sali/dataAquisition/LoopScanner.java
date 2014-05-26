@@ -37,6 +37,11 @@ public class LoopScanner extends BroadcastReceiver implements
 	private float[] orientationv;
 	private float pressure_millibars;
 	private float temp_celsius;
+	private float[] magn_uT;
+	private float lux;
+	private float proximity_cm;
+	private float[] gravity;
+	private float humidity;
 	
 	// WiFi module use.
 	private WifiManager Wmg;
@@ -106,10 +111,20 @@ public class LoopScanner extends BroadcastReceiver implements
 		Sensor orientation = Smg.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		Sensor Pressure = Smg.getDefaultSensor(Sensor.TYPE_PRESSURE);
 		Sensor Temperature = Smg.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+		Sensor Magnetic = Smg.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		Sensor Light = Smg.getDefaultSensor(Sensor.TYPE_LIGHT);
+		Sensor Proximity = Smg.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+		Sensor Gravity = Smg.getDefaultSensor(Sensor.TYPE_GRAVITY);
+		Sensor Humidity = Smg.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
 		
 		Smg.registerListener(this, orientation,SensorManager.SENSOR_DELAY_GAME);
 		Smg.registerListener(this, Pressure,SensorManager.SENSOR_DELAY_GAME);
 		Smg.registerListener(this, Temperature,SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Magnetic, SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Light, SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Proximity, SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Gravity, SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Humidity, SensorManager.SENSOR_DELAY_GAME);
 			
 
 
@@ -138,6 +153,22 @@ public class LoopScanner extends BroadcastReceiver implements
 			break;
 		case Sensor.TYPE_AMBIENT_TEMPERATURE:
 			temp_celsius = event.values[0];
+			break;
+		case Sensor.TYPE_MAGNETIC_FIELD:
+			magn_uT = event.values.clone();
+			break;
+		case Sensor.TYPE_LIGHT:
+			lux = event.values[0];
+			break;
+		case Sensor.TYPE_PROXIMITY:
+			proximity_cm = event.values[0];
+			break;
+		case Sensor.TYPE_GRAVITY:
+			gravity = (float[]) event.values.clone();
+			break;
+		case Sensor.TYPE_RELATIVE_HUMIDITY:
+			humidity = event.values[0];
+			break;
 		default:
 			return;
 		}
@@ -181,12 +212,19 @@ public class LoopScanner extends BroadcastReceiver implements
 		float gyroy = orientationv[1];
 		float gyroz = orientationv[2];
 		
-
+		float gravityx = gravity[0];
+		float gravityy = gravity[1];
+		float gravityz = gravity[2];
+		
+		float magn_uTx = magn_uT[0];
+		float magn_uTy = magn_uT[1];
+		float magn_uTz = magn_uT[2];
+		
 		List<ScanResult> results = Wmg.getScanResults();
 
 		Wmg.startScan();
 		
-		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars);
+		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars,temp_celsius,magn_uTx,magn_uTy,magn_uTz,proximity_cm,gravityx,gravityy,gravityz,humidity);
 
 	}
 
