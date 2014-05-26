@@ -35,6 +35,8 @@ public class LoopScanner extends BroadcastReceiver implements
 	// orientation last values.
 	private SensorManager Smg;
 	private float[] orientationv;
+	private float pressure_millibars;
+	private float temp_celsius;
 	
 	// WiFi module use.
 	private WifiManager Wmg;
@@ -102,8 +104,12 @@ public class LoopScanner extends BroadcastReceiver implements
 		Smg.unregisterListener(this);
 
 		Sensor orientation = Smg.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+		Sensor Pressure = Smg.getDefaultSensor(Sensor.TYPE_PRESSURE);
+		Sensor Temperature = Smg.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
 		
 		Smg.registerListener(this, orientation,SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Pressure,SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Temperature,SensorManager.SENSOR_DELAY_GAME);
 			
 
 
@@ -127,7 +133,11 @@ public class LoopScanner extends BroadcastReceiver implements
 		case Sensor.TYPE_ROTATION_VECTOR:
 			orientationv = (float[]) event.values.clone();
 			break;
-
+		case Sensor.TYPE_PRESSURE:
+			pressure_millibars = event.values[0];
+			break;
+		case Sensor.TYPE_AMBIENT_TEMPERATURE:
+			temp_celsius = event.values[0];
 		default:
 			return;
 		}
@@ -176,7 +186,7 @@ public class LoopScanner extends BroadcastReceiver implements
 
 		Wmg.startScan();
 		
-		host.processScans(results,gyrox,gyroy,gyroz);
+		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars);
 
 	}
 
