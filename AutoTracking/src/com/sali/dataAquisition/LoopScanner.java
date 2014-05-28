@@ -42,6 +42,7 @@ public class LoopScanner extends BroadcastReceiver implements
 	private float proximity_cm;
 	private float[] gravity;
 	private float humidity;
+	private float[] acceleration;
 	
 	// WiFi module use.
 	private WifiManager Wmg;
@@ -116,6 +117,7 @@ public class LoopScanner extends BroadcastReceiver implements
 		Sensor Proximity = Smg.getDefaultSensor(Sensor.TYPE_PROXIMITY);
 		Sensor Gravity = Smg.getDefaultSensor(Sensor.TYPE_GRAVITY);
 		Sensor Humidity = Smg.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+		Sensor Accelerometer = Smg.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 		
 		Smg.registerListener(this, orientation,SensorManager.SENSOR_DELAY_GAME);
 		Smg.registerListener(this, Pressure,SensorManager.SENSOR_DELAY_GAME);
@@ -125,7 +127,7 @@ public class LoopScanner extends BroadcastReceiver implements
 		Smg.registerListener(this, Proximity, SensorManager.SENSOR_DELAY_GAME);
 		Smg.registerListener(this, Gravity, SensorManager.SENSOR_DELAY_GAME);
 		Smg.registerListener(this, Humidity, SensorManager.SENSOR_DELAY_GAME);
-			
+		Smg.registerListener(this, Accelerometer, SensorManager.SENSOR_DELAY_GAME);	
 
 
 	}
@@ -168,6 +170,9 @@ public class LoopScanner extends BroadcastReceiver implements
 			break;
 		case Sensor.TYPE_RELATIVE_HUMIDITY:
 			humidity = event.values[0];
+			break;
+		case Sensor.TYPE_LINEAR_ACCELERATION:
+			acceleration = event.values.clone();
 			break;
 		default:
 			return;
@@ -220,11 +225,15 @@ public class LoopScanner extends BroadcastReceiver implements
 		float magn_uTy = magn_uT[1];
 		float magn_uTz = magn_uT[2];
 		
+		float accelerationx = acceleration[0];
+		float accelerationy = acceleration[1];
+		float accelerationz = acceleration[2];
+		
 		List<ScanResult> results = Wmg.getScanResults();
 
 		Wmg.startScan();
 		
-		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars,temp_celsius,magn_uTx,magn_uTy,magn_uTz,proximity_cm,gravityx,gravityy,gravityz,humidity);
+		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars,temp_celsius,magn_uTx,magn_uTy,magn_uTz,proximity_cm,gravityx,gravityy,gravityz,humidity,accelerationx,accelerationy,accelerationz);
 
 	}
 
