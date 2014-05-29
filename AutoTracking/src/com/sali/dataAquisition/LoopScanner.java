@@ -1,6 +1,7 @@
 package com.sali.dataAquisition;
 
 import java.util.List;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
@@ -14,10 +15,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.Settings;
 
 /*
@@ -26,7 +29,7 @@ import android.provider.Settings;
  */
 
 public class LoopScanner extends BroadcastReceiver implements
-		SensorEventListener {
+		SensorEventListener, LocationListener {
 
 	// Callback
 	Scans host;
@@ -59,8 +62,8 @@ public class LoopScanner extends BroadcastReceiver implements
 	private LocationManager gps;
 	private String provider;
 	private boolean gpsReceiver;
-	int lat;
-	int lon;
+	double lat;
+	double lon;
 
 	/*
 	 * Save the context reference and initialize all used variables.
@@ -77,7 +80,7 @@ public class LoopScanner extends BroadcastReceiver implements
 		Wmg = (WifiManager) hostContext.getSystemService(Context.WIFI_SERVICE);
 		Smg = (SensorManager) hostContext.getSystemService(Context.SENSOR_SERVICE);
 		gps = (LocationManager) hostContext.getSystemService(Context.LOCATION_SERVICE);
-		
+		gps.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
 
 		registerSensor();
 	}
@@ -204,8 +207,8 @@ public class LoopScanner extends BroadcastReceiver implements
 
 	
 	public void onLocationChanged(Location location) {
-	    lat = (int) (location.getLatitude());
-	    lon = (int) (location.getLongitude());
+	    lat = location.getLatitude();
+	    lon = location.getLongitude();
 	}
 	
 	@SuppressLint("NewApi")
@@ -259,8 +262,26 @@ public class LoopScanner extends BroadcastReceiver implements
 
 		Wmg.startScan();
 		
-		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars,temp_celsius,magn_uTx,magn_uTy,magn_uTz,proximity_cm,gravityx,gravityy,gravityz,humidity,accelerationx,accelerationy,accelerationz);
+		host.processScans(results,gyrox,gyroy,gyroz,pressure_millibars,temp_celsius,magn_uTx,magn_uTy,magn_uTz,proximity_cm,gravityx,gravityy,gravityz,humidity,accelerationx,accelerationy,accelerationz,lat,lon);
 
+	}
+
+
+	public void onStatusChanged(String provider, int status, Bundle extras) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void onProviderEnabled(String provider) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void onProviderDisabled(String provider) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
