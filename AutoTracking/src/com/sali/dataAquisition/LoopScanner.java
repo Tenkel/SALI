@@ -1,16 +1,20 @@
 package com.sali.dataAquisition;
 
 import java.util.List;
-
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -32,7 +36,7 @@ public class LoopScanner extends BroadcastReceiver implements
 	// To use as context reference.
 	private Context hostContext;
 	
-	// orientation last values.
+	// Sensors values.
 	private SensorManager Smg;
 	private float[] orientationv;
 	private float pressure_millibars;
@@ -44,10 +48,19 @@ public class LoopScanner extends BroadcastReceiver implements
 	private float humidity;
 	private float[] acceleration;
 	
+	// PackageManager
+	private PackageManager PM;
+		
 	// WiFi module use.
 	private WifiManager Wmg;
 	private boolean regReceiver;
-
+	
+	// GPS module use
+	private LocationManager gps;
+	private String provider;
+	private boolean gpsReceiver;
+	int lat;
+	int lon;
 
 	/*
 	 * Save the context reference and initialize all used variables.
@@ -60,9 +73,11 @@ public class LoopScanner extends BroadcastReceiver implements
 
 		i = new IntentFilter();
 		i.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+		PackageManager PM= hostContext.getPackageManager();
 		Wmg = (WifiManager) hostContext.getSystemService(Context.WIFI_SERVICE);
 		Smg = (SensorManager) hostContext.getSystemService(Context.SENSOR_SERVICE);
-
+		gps = (LocationManager) hostContext.getSystemService(Context.LOCATION_SERVICE);
+		
 
 		registerSensor();
 	}
@@ -108,6 +123,7 @@ public class LoopScanner extends BroadcastReceiver implements
 	public void registerSensor() {
 
 		Smg.unregisterListener(this);
+		
 
 		Sensor orientation = Smg.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		Sensor Pressure = Smg.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -119,16 +135,21 @@ public class LoopScanner extends BroadcastReceiver implements
 		Sensor Humidity = Smg.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
 		Sensor Accelerometer = Smg.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 		
+		if (PM.hasSystemFeature(PackageManager.FEATURE_SENSOR_GYROSCOPE))
 		Smg.registerListener(this, orientation,SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Pressure,SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Temperature,SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Magnetic, SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Light, SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Proximity, SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Gravity, SensorManager.SENSOR_DELAY_GAME);
+		if (PM.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER)){
 		Smg.registerListener(this, Humidity, SensorManager.SENSOR_DELAY_GAME);
-		Smg.registerListener(this, Accelerometer, SensorManager.SENSOR_DELAY_GAME);	
-
+		Smg.registerListener(this, Pressure,SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Temperature,SensorManager.SENSOR_DELAY_GAME);}
+		if (PM.hasSystemFeature(PackageManager.FEATURE_SENSOR_COMPASS)){
+		Smg.registerListener(this, Magnetic, SensorManager.SENSOR_DELAY_GAME);
+		Smg.registerListener(this, Gravity, SensorManager.SENSOR_DELAY_GAME);}
+		if (PM.hasSystemFeature(PackageManager.FEATURE_SENSOR_LIGHT))
+		Smg.registerListener(this, Light, SensorManager.SENSOR_DELAY_GAME);
+		if (PM.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY))
+		Smg.registerListener(this, Proximity, SensorManager.SENSOR_DELAY_GAME);
+		if (PM.hasSystemFeature(PackageManager.FEATURE_SENSOR_ACCELEROMETER))
+		Smg.registerListener(this, Accelerometer, SensorManager.SENSOR_DELAY_GAME);
 
 	}
 
@@ -180,11 +201,16 @@ public class LoopScanner extends BroadcastReceiver implements
 
 	}
 
+
+	
+	public void onLocationChanged(Location location) {
+	    lat = (int) (location.getLatitude());
+	    lon = (int) (location.getLongitude());
+	}
+	
+	@SuppressLint("NewApi")
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	@SuppressWarnings("deprecation")
-	/*
-	 * Prepare and start acquisition cycle.
-	 */
 	public void acquire() {
 
 		// Can't Disconnect from WIFI - Manage Deprecation.
