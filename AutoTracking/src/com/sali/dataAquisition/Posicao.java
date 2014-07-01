@@ -1,18 +1,56 @@
 package com.sali.dataAquisition;
 
-import android.content.Context;
+public class Posicao{
 
-public class Posicao extends DataManager {
+	private Long id;
 
-	public void insert_x(float x, int idAndar){
-	};
+	private Long idAndar;
 	
-	public void insert_y(float y, int idAndar){
-	};
+	private Integer x;
 	
-	public Posicao(Context c) {
-		super(c);
-		// TODO Auto-generated constructor stub
+	private Integer y;
+	
+	public Posicao() {
+
 	}
 
+	public Posicao(Long idAndar, Integer x, Integer y) {
+		super();
+		this.idAndar = idAndar;
+		this.x = x;
+		this.y = y;
+	}
+
+	public Long getId() {
+		return id;
+	}
+	
+	public Integer getX() {
+		return x;
+	}
+
+	public Integer getY() {
+		return y;
+	}
+
+	public Long getidAndar() {
+		return idAndar;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setX(Integer x) {
+		this.x = x;
+	}
+
+	public void setY(Integer y) {
+		this.y = y;
+	}
+
+	public void setidAndar(Long idAndar) {
+		this.idAndar = idAndar;
+	}
+	
 }

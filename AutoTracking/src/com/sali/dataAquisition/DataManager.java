@@ -77,7 +77,7 @@ public class DataManager {
 	private static final String SampleTable = "Sample";
 
 	/*
-	 * Data base name and version
+	 * data base name and version
 	 */
 
 	private static final String DB_NAME = "FindDB";

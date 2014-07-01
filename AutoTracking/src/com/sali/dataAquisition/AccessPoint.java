@@ -1,22 +1,68 @@
 package com.sali.dataAquisition;
 
-import android.content.Context;
 
-public class AccessPoint extends DataManager {
+public class AccessPoint{
 
-	public void insert_bssid(String[] bssid, int idPosicao){
-	};
+	private Long id;
+
+	private Long idPosicao;
 	
-	public void insert_essid(String[] essid, int idPosicao){
-	};
+	private String bssid;
 	
-	public void insert_confianca(float confianca, int idPosicao){
-	};
+	private String essid;
 	
-	public AccessPoint(Context c) {
-		super(c);
-		// TODO Auto-generated constructor stub
+	private float confianca;
+	
+	public AccessPoint() {
+
+	}
+
+	public AccessPoint(Long idPosicao, String bssid, String essid, float confianca) {
+		super();
+		this.idPosicao = idPosicao;
+		this.bssid = bssid;
+		this.essid = essid;
+		this.confianca = confianca;
+	}
+
+	public Long getId() {
+		return id;
 	}
 	
+	public String getbssid() {
+		return bssid;
+	}
 
+	public String getessid() {
+		return essid;
+	}
+
+	public Long getidPosicao() {
+		return idPosicao;
+	}
+	
+	public float getconfianca() {
+		return confianca;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setbssid(String bssid) {
+		this.bssid = bssid;
+	}
+
+	public void setessid(String essid) {
+		this.essid = essid;
+	}
+
+	public void setidPosicao(Long idPosicao) {
+		this.idPosicao = idPosicao;
+	}
+	
+	public void setconfianca(float confianca){
+		this.confianca = confianca;
+	}
+	
 }
