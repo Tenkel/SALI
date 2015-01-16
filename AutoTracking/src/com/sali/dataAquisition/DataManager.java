@@ -199,7 +199,7 @@ public class DataManager extends SQLiteOpenHelper {
 	}
 
 	/*
-	 * Data base name and version
+	 * data base name and version
 	 */
 
 	private static final String DB_NAME = "database.db";
