@@ -1,544 +1,469 @@
 package com.sali.dataAquisition;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OptionalDataException;
-import java.io.StreamCorruptedException;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-
-import com.sali.algorithms.KDE;
-
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteStatement;
-import android.util.Log;
-import android.widget.Toast;
 
 /*
  *  Class that Manages all data access, especially to the database.
  */
 
-public class DataManager {
-	// SQLiteStatement holders
-	SQLiteStatement nroomsquery;
-	SQLiteStatement nsamplesquery;
+
+/*
+ * Extending SQLiteOpenHelper so its objects can manipulate the database
+ */
+public class DataManager extends SQLiteOpenHelper {
 
 	/*
 	 * String with table names (eg. private static final String LocalTable =
 	 * "Local") and class (structure like) with inside table columns (eg. public
 	 * static class Local)
 	 */
-	public static class Local {
-		public static final String ID = "Cd_local";
-		public static final String PX = "Vi_px";
-		public static final String PY = "Vi_py";
-		public static final String ROOM = "Cd_room";
+
+	@Override
+	public void onConfigure(SQLiteDatabase db) {
+		db.setForeignKeyConstraintsEnabled(true);
+		super.onConfigure(db);
 	}
 
 	private static final String LocalTable = "Local";
+	
+	public static class Local {
+		public static final String ID = "id";
+		public static final String NOME = "nome";
+		public static final String POSICAOGLOBALLAT0 = "posicaoGlobalLat0";
+		public static final String POSICAOGLOBALLONG0 = "posicaoGlobalLong0";
+		public static final String POSICAOGLOBALLAT1 = "posicaoGlobalLat1";
+		public static final String POSICAOGLOBALLONG1 = "posicaoGlobalLong1";
+	}
+	
+	private static final String AndarTable = "Andar";
 
-	public static class Access_Point {
-		public static final String ID = "Cd_access_point";
-		public static final String NAME = "Nm_name";
+	public static class Andar {
+		public static final String ID = "id";
+		public static final String IDLOCAL = "idLocal";
+		public static final String NOME = "nome";
+		public static final String URIMAPA = "uriMapa";
+		public static final String CAMADAS = "camadas";
+		public static final String FK_ANDAR_LOCAL = "fk_Andar_Local";
+		public static final String FK_ANDAR_LOCAL_IDX = "fk_Andar_Local_idx";
+	}
+	
+	private static final String PosicaoTable = "Posicao";
+
+	public static class Posicao {
+		public static final String ID = "id";
+		public static final String IDANDAR = "idAndar";
+		public static final String X = "x";
+		public static final String Y = "y";
+		public static final String FK_POSICAO_ANDAR = "fk_Posicao_Andar";
+		public static final String FK_POSICAO_ANDAR_IDX = "fk_Posicao_Andar_idx";
+	}
+	
+	private static final String ObservacaoTable = "Observacao";
+
+	public static class Observacao {
+		public static final String ID = "id";
+		public static final String IDPOSICAO = "idPosicao";
+		public static final String INSTANTECOLETA = "instanteColeta";
+		public static final String FK_OBSERVACAO_POSICAO = "fk_Observacao_Posicao";
+		public static final String FK_SAMPLE_LOCAL_IDX = "fk_Sample_Local_idx";
+	}
+	
+	private static final String AccessPointTable = "AccessPoint";
+
+	public static class AccessPoint {
+		public static final String ID = "id";
+		public static final String IDPOSICAO = "idPosicao";
+		public static final String BSSID = "bssid";
+		public static final String ESSID = "essid";
+		public static final String CONFIANCA = "confianca";
+		public static final String FK_ACCESSPOINT_POSICAO = "fk_AccessPoint_Posicao";
+		public static final String FK_ACCESSPOINT_LOCAL_IDX = "fk_AccessPoint_Local_idx";
+	}
+	
+	private static final String UsuarioTable = "Usuario";
+
+	public static class Usuario {
+		public static final String ID = "id";
+		public static final String NOME = "nome";
+		public static final String CHAVE = "chave";
+		public static final String IMEI = "imei";
+		public static final String ENDMAC = "endMac";
+	}
+	
+	private static final String LeituraWiFiTable = "LeituraWiFi";
+
+	public static class LeituraWiFi {
+		public static final String ID = "id";
+		public static final String IDACCESSPOINT = "idAccessPoint";
+		public static final String IDOBSERVACAO = "idObservacao";
+		public static final String VALOR = "valor";
+		public static final String FK_LEITURAWIFI_ACCESSPOINT = "fk_LeituraWiFi_AccessPoint";
+		public static final String FK_LEITURAWIFI_OBSERVACAO = "fk_LeituraWiFi_Observacao";
+		public static final String FK_WIFIREADING_ACCESSPOINT_IDX = "fk_WiFiReading_AccessPoint_idx";
+		public static final String FK_WIFIREADING_SAMPLE_IDX = "fk_WiFiReading_Sample_idx";
+	}
+	
+	private static final String UnidadeSensoresTable = "UnidadeSensores";
+
+	public static class UnidadeSensores {
+		public static final String ID = "id";
+		public static final String ACC = "acc";
+		public static final String TEMP = "temp";
+		public static final String GRAV = "grav";
+		public static final String GYRO = "gyro";
+		public static final String LIGHT = "light";
+		public static final String LINACC = "linAcc";
+		public static final String MAG = "mag";
+		public static final String ORIENT = "orient";
+		public static final String PRESS = "press";
+		public static final String PROX = "prox";
+		public static final String HUM = "hum";
+		public static final String ROT = "rot";
+	}
+	
+	private static final String LeituraSensoresTable = "LeituraSensores";
+
+	public static class LeituraSensores {
+		public static final String ID = "id";
+		public static final String IDOBSERVACAO = "idObservacao";
+		public static final String IDUNIDADESENSORES = "idUnidadeSensores";
+		public static final String ACCX = "accX";
+		public static final String ACCY = "accY";
+		public static final String ACCZ = "accZ";
+		public static final String TEMP = "temp";
+		public static final String GRAVX = "gravX";
+		public static final String GRAVY = "gravY";
+		public static final String GRAVZ = "gravZ";
+		public static final String GYROX = "gyroX";
+		public static final String GYROY = "gyroY";
+		public static final String GYROZ = "gyroZ";
+		public static final String LIGHT = "light";
+		public static final String LINACCX = "linAccX";
+		public static final String LINACCY = "linAccY";
+		public static final String LINACCZ = "linAccZ";
+		public static final String MAGX = "magX";
+		public static final String MAGY = "magY";
+		public static final String MAGZ = "magZ";
+		public static final String ORIENTX = "orientX";
+		public static final String ORIENTY = "orientY";
+		public static final String ORIENTZ = "orientZ";
+		public static final String PRESS = "press";
+		public static final String PROX = "prox";
+		public static final String HUM = "hum";
+		public static final String ROTX = "rotX";
+		public static final String ROTY = "rotY";
+		public static final String ROTZ = "rotZ";
+		public static final String ROTSCALAR = "rotScalar";
+		public static final String FK_LEITURASENSORES_UNIDADESENSORES = "fk_LeituraSensores_UnidadeSensores";
+		public static final String FK_LEITURASENSORES_OBSERVACAO = "fk_LeituraSensores_Observacao";
+		public static final String FK_SENSORSREADING_SENSORUNITS_IDX = "fk_SensorsReading_SensorUnits_idx";
+		public static final String FK_SENSORSREADING_SAMPLE_IDX = "fk_SensorsReading_Sample_idx";
+	}
+	
+	private static final String FuncaoTipoTable = "FuncaoTipo";
+
+	public static class FuncaoTipo {
+		public static final String ID = "id";
+		public static final String TIPO = "tipo";
 	}
 
-	private static final String Access_PointTable = "Access_Point";
+	
+	private static final String FuncaoPosicaoTable = "FuncaoPosicao";
 
-	public static class KSD {
-		public static final String ID_LOCAL = "Cd_local";
-		public static final String ID_AP = "Cd_access_point";
-		public static final String LINK = "Nm_ksd_link";
+	public static class FuncaoPosicao {
+		public static final String ID = "id";
+		public static final String IDPOSICAO = "idPosicao";
+		public static final String IDACCESSPOINT = "idAccessPoint";
+		public static final String TIPO = "tipo";
+		public static final String URI = "uri";
+		public static final String FK_FUNCAOPOSICAO_POSICAO = "fk_FuncaoPosicao_Posicao";
+		public static final String FK_FUNCAOPOSICAO_ACCESSPOINT = "fk_FuncaoPosicao_AccessPoint";
+		public static final String FK_POSFUNC_LOCAL_IDX = "fk_PosFunc_Local_idx";
+		public static final String FK_POSFUNC_ACCESSPOINT_IDX = "fk_PosFunc_AccessPoint_idx";
+		public static final String IDTIPO = "idTipo";
+		public static final String FK_FUNCAOPOSICAO_FUNCAOTIPO = "fk_FuncaoPosicao_FuncaoTipo";
+		public static final String UNIQUE_FUNCAOTIPO = "unique_FuncaoTipo";
 	}
+	
+	private static final String SalaTable = "Sala";
 
-	private static final String KSDTable = "KSD";
-
-	public static class Sample {
-		public static final String ID = "Cd_sample";
-		public static final String VALUE = "Vi_value";
-		public static final String GYROX = "Vi_gyrox";
-		public static final String GYROY = "Vi_gyroy";
-		public static final String GYROZ = "Vi_gyroz";
-//		public static final String GYROAC = "Vi_gyro_accuracy";
-		public static final String LOCAL = "Cd_local";
-		public static final String AP = "Cd_access_point";
+	public static class Sala {
+		public static final String ID = "id";
+		public static final String IDANDAR = "idAndar";
+		public static final String NOME = "nome";
+		public static final String IDPOLIGONO = "idPoligono";
+		public static final String FK_SALA_ANDAR = "fk_Sala_Andar";
+		public static final String FK_SALA_ANDAR_IDX = "fk_Sala_Andar_idx";
 	}
-
-	private static final String SampleTable = "Sample";
 
 	/*
 	 * Data base name and version
 	 */
 
-	private static final String DB_NAME = "FindDB";
+	private static final String DB_NAME = "database.db";
 	private static final int DB_VERSION = 1;
-
-	// Object that connects to the database
-	private DBMng DBManager;
-	// Used to save the original context from which it's called
-	private final Context theContext;
-	// The actual database object
-	private SQLiteDatabase DBFind;
-	// Cursors list so they are automatically destroyed when the object itself
-	// is.
-	private ArrayList<Cursor> cursors = new ArrayList<Cursor>();
-
-	/*
-	 * Extending SQLiteOpenHelper so its objects can manipulate the database
-	 */
-	private static class DBMng extends SQLiteOpenHelper {
-
-		public DBMng(Context context) {
-			super(context, DB_NAME, null, DB_VERSION);
-		}
-
-		// Database Creation thought SQL 'CREATE TABLE'
-		@Override
-		public void onCreate(SQLiteDatabase db) {
-			// Foreign Keys = ON
-			db.execSQL("PRAGMA foreign_keys = ON;");
-
-			// Local
-			db.execSQL("CREATE TABLE " + LocalTable + "(" + Local.ID
-					+ " INTEGER PRIMARY KEY AUTOINCREMENT," + Local.PX
-					+ " INTEGER, " + Local.PY + " INTEGER, " + Local.ROOM
-					+ " INTEGER, " + "UNIQUE(" + Local.PX + ", " + Local.PY
-					+ ") );");
-
-			// Access_Point
-			db.execSQL("CREATE TABLE " + Access_PointTable + "("
-					+ Access_Point.ID + " integer primary key autoincrement, "
-					+ Access_Point.NAME + " TEXT UNIQUE);");
-
-			// KSD
-			db.execSQL("CREATE TABLE " + KSDTable + "(" + KSD.ID_AP
-					+ " INTEGER," + KSD.ID_LOCAL + " INTEGER, " + KSD.LINK
-					+ " TEXT," + "FOREIGN KEY(" + KSD.ID_LOCAL
-					+ ") REFERENCES " + LocalTable + "(" + Local.ID + "),"
-					+ "FOREIGN KEY(" + KSD.ID_AP + ") REFERENCES "
-					+ Access_PointTable + "(" + Access_Point.ID + "),"
-					+ "PRIMARY KEY(" + KSD.ID_AP + ", " + KSD.ID_LOCAL + ") );");
-
-			// Sample
-			db.execSQL("CREATE TABLE " + SampleTable + "(" + Sample.ID
-					+ " INTEGER PRIMARY KEY AUTOINCREMENT, " + Sample.VALUE
-					+ " INTEGER," + Sample.GYROX + " REAL," + Sample.GYROY
-					+ " REAL," + Sample.GYROZ + " REAL," 
-//					+ Sample.GYROAC	+ " INTEGER," 
-					+ Sample.LOCAL + " INTEGER," + Sample.AP
-					+ " INTEGER," + "FOREIGN KEY(" + Sample.LOCAL
-					+ ") REFERENCES " + KSDTable + "(" + KSD.ID_LOCAL + "),"
-					+ "FOREIGN KEY(" + Sample.AP + ") REFERENCES " + KSDTable
-					+ "(" + KSD.ID_AP + ") );");
-
-		}
-
-		@Override
-		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-		}
-
+	private Context theContext;
+	
+	
+	public DataManager(Context context) {
+		super(context, DB_NAME, null, DB_VERSION);
+		theContext = context;
 	}
 
-	// Constructor save context and allocate new DB.
-	public DataManager(Context c) {
-		theContext = c;
-		DBManager = new DBMng(theContext);
-	}
-
-	// Get writable handler to the DB.
-	public DataManager open() {
-		DBFind = DBManager.getWritableDatabase();
-		return this;
-	}
-
-	// Deallocate all opened cursors and release handler.
-	public void close() {
-		for (Cursor cursor : cursors)
-			cursor.close();
-		DBManager.close();
-	}
-
-	/*
-	 * Insert new sample entry, including:
-	 * 
-	 * -RSSID power, -the Access Point BSSID, -the XY and Room position of the
-	 * device (User-entered), -Angle get thought gyroscope and
-	 * magnetometer(float) as well as its accuracy(int),
-	 */
-
-	public void insert(int power, String APcode, int localX, int localY,
-			int room, float gyrox, float gyroy, float gyroz/*, int gyroac*/) {
-		long localid, apid;
+	// Database Creation thought SQL 'CREATE TABLE'
+	@Override
+	public void onCreate(SQLiteDatabase db) {
 
 		// Local
-		ContentValues entry = new ContentValues();
-		entry.put(Local.PX, localX);
-		entry.put(Local.PY, localY);
-		entry.put(Local.ROOM, room);
-		localid = DBFind.insert(LocalTable, null, entry);
-		if (localid == -1) {
-			Cursor c = DBFind.query(LocalTable, new String[] { "rowid" },
-					Local.PX + " == " + localX + " AND " + Local.PY + " == "
-							+ localY, null, null, null, null);
-			c.moveToFirst();
-			localid = c.getLong(0);
-			c.close();
-		}
+		db.execSQL("CREATE TABLE " + LocalTable +  " (  " 
+				+ Local.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+				+ Local.NOME + " TEXT, "
+				+ Local.POSICAOGLOBALLAT0 + " REAL, "
+				+ Local.POSICAOGLOBALLAT1 + " REAL, "
+				+ Local.POSICAOGLOBALLONG0 + " REAL, "
+				+ Local.POSICAOGLOBALLONG1 + " REAL );");
 
-		// Access Point
-		entry.clear();
-		entry.put(Access_Point.NAME, APcode);
-		apid = DBFind.insert(Access_PointTable, null, entry);
-		if (apid == -1) {
-			Cursor c = DBFind.query(Access_PointTable,
-					new String[] { "rowid" }, Access_Point.NAME + " == '"
-							+ APcode + "'", null, null, null, null);
-			c.moveToFirst();
-			apid = c.getLong(0);
-			c.close();
-		}
+		
+		//Table `Andar`
+		db.execSQL("CREATE TABLE "+ AndarTable + " ( "
+		  + Andar.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+		  + Andar.IDLOCAL + " INTEGER, "
+		  + Andar.NOME + " TEXT, "
+		  + Andar.URIMAPA + " TEXT, "
+		  + Andar.CAMADAS + " TEXT, "
 
-		// KSD
-		entry.clear();
-		entry.put(KSD.ID_AP, apid);
-		entry.put(KSD.ID_LOCAL, localid);
-		entry.put(KSD.LINK, "");
-		DBFind.insert(KSDTable, null, entry);
+		  +"CONSTRAINT " + Andar.FK_ANDAR_LOCAL +
+		    "FOREIGN KEY (" + Andar.IDLOCAL + ")" +
+		    "REFERENCES " + LocalTable + " (" + Local.ID + ")"
+		  
+		  +");");
 
-		// Sample
-		entry.clear();
-		entry.put(Sample.VALUE, power);
-		entry.put(Sample.GYROX, gyrox);
-		entry.put(Sample.GYROY, gyroy);
-		entry.put(Sample.GYROZ, gyroz);
-//		entry.put(Sample.GYROAC, gyroac);
-		entry.put(Sample.LOCAL, localid);
-		entry.put(Sample.AP, apid);
-		DBFind.insert(SampleTable, null, entry);
+		db.execSQL("CREATE INDEX " + Andar.FK_ANDAR_LOCAL_IDX + " ON " + AndarTable + " (" + Andar.IDLOCAL + " ASC);");
+		
+		//Table `Posicao`
+		db.execSQL("CREATE TABLE "+ PosicaoTable + " ( "
+				  + Posicao.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + Posicao.IDANDAR + " INTEGER, "
+				  + Posicao.X + " REAL, "
+				  + Posicao.Y + " REAL, "
 
+				  +"CONSTRAINT " + Posicao.FK_POSICAO_ANDAR +
+				    "FOREIGN KEY (" + Posicao.IDANDAR + ")" +
+				    "REFERENCES " + AndarTable + " (" + Andar.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + Posicao.FK_POSICAO_ANDAR_IDX + " ON " + PosicaoTable + " (" + Posicao.IDANDAR + " ASC);");
+				
+		//Table `Posicao`
+		db.execSQL("CREATE TABLE "+ ObservacaoTable + " ( "
+				  + Observacao.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + Observacao.IDPOSICAO + " INTEGER, "
+				  + Observacao.INSTANTECOLETA + " INTEGER, "
+
+				  +"CONSTRAINT " + Observacao.FK_OBSERVACAO_POSICAO +
+				    "FOREIGN KEY (" + Observacao.IDPOSICAO + ")" +
+				    "REFERENCES " + PosicaoTable + " (" + Posicao.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + Observacao.FK_SAMPLE_LOCAL_IDX + " ON " + ObservacaoTable + " (" + Observacao.IDPOSICAO + " ASC);");
+				
+		//Table `Observacao`
+		db.execSQL("CREATE TABLE "+ ObservacaoTable + " ( "
+				  + Observacao.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + Observacao.IDPOSICAO + " INTEGER, "
+				  + Observacao.INSTANTECOLETA + " INTEGER, "
+
+				  +"CONSTRAINT " + Observacao.FK_OBSERVACAO_POSICAO +
+				    "FOREIGN KEY (" + Observacao.IDPOSICAO + ")" +
+				    "REFERENCES " + PosicaoTable + " (" + Posicao.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + Observacao.FK_SAMPLE_LOCAL_IDX + " ON " + ObservacaoTable + " (" + Observacao.IDPOSICAO + " ASC);");
+
+		
+		//Table `AccessPoint`
+		db.execSQL("CREATE TABLE "+ AccessPointTable + " ( "
+				  + AccessPoint.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + AccessPoint.IDPOSICAO + " INTEGER, "
+				  + AccessPoint.BSSID + " TEXT UNIQUE, "
+				  + AccessPoint.ESSID + " TEXT, "
+				  + AccessPoint.CONFIANCA + " TEXT, "
+
+				  +"CONSTRAINT " + AccessPoint.FK_ACCESSPOINT_POSICAO +
+				    "FOREIGN KEY (" + AccessPoint.IDPOSICAO + ")" +
+				    "REFERENCES " + PosicaoTable + " (" + Posicao.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + AccessPoint.FK_ACCESSPOINT_LOCAL_IDX + " ON " + AccessPointTable + " (" + AccessPoint.IDPOSICAO + " ASC);");
+
+
+		//Table `Usuario`
+		db.execSQL("CREATE TABLE "+ UsuarioTable + " ( "
+				  + Usuario.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + Usuario.NOME + " TEXT, "
+				  + Usuario.CHAVE + " TEXT, "
+				  + Usuario.IMEI + " TEXT, "
+				  + Usuario.ENDMAC + " TEXT");
+		
+
+		//Table `LeituraWiFi`
+		db.execSQL("CREATE TABLE "+ LeituraWiFiTable + " ( "
+				  + LeituraWiFi.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + LeituraWiFi.IDACCESSPOINT + " INTEGER, "
+				  + LeituraWiFi.IDOBSERVACAO + " INTEGER, "
+				  + LeituraWiFi.VALOR + " INTEGER, "
+
+				  +"CONSTRAINT " + LeituraWiFi.FK_LEITURAWIFI_ACCESSPOINT +
+				    "FOREIGN KEY (" + LeituraWiFi.IDACCESSPOINT + ")" +
+				    "REFERENCES " + AccessPointTable + " (" + AccessPoint.ID + ")"
+
+				  +"CONSTRAINT " + LeituraWiFi.FK_LEITURAWIFI_OBSERVACAO +
+				    "FOREIGN KEY (" + LeituraWiFi.IDOBSERVACAO + ")" +
+				    "REFERENCES " + ObservacaoTable + " (" + Observacao.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + LeituraWiFi.FK_WIFIREADING_ACCESSPOINT_IDX + " ON " + LeituraWiFiTable + " (" + LeituraWiFi.IDACCESSPOINT + " ASC);");
+		
+
+		db.execSQL("CREATE INDEX " + LeituraWiFi.FK_WIFIREADING_SAMPLE_IDX + " ON " + LeituraWiFiTable + " (" + LeituraWiFi.IDOBSERVACAO + " ASC);");
+		
+
+		//Table `UnidadeSensores`
+		db.execSQL("CREATE TABLE "+ UnidadeSensoresTable + " ( "
+				  + UnidadeSensores.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + UnidadeSensores.ACC + " TEXT, "
+				  + UnidadeSensores.TEMP + " TEXT, "
+				  + UnidadeSensores.GRAV + " TEXT, "
+				  + UnidadeSensores.GYRO + " TEXT, "
+				  + UnidadeSensores.LIGHT + " TEXT, "
+				  + UnidadeSensores.LINACC + " TEXT, "
+				  + UnidadeSensores.MAG + " TEXT, "
+				  + UnidadeSensores.ORIENT + " TEXT, "
+				  + UnidadeSensores.PRESS + " TEXT, "
+				  + UnidadeSensores.PROX + " TEXT, "
+				  + UnidadeSensores.HUM + " TEXT, "
+				  + UnidadeSensores.ROT + " TEXT");
+		
+		
+
+		//Table `LeituraSensores`
+		db.execSQL("CREATE TABLE "+ LeituraSensoresTable + " ( "
+				  + LeituraSensores.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + LeituraSensores.IDOBSERVACAO + " INTEGER, "
+				  + LeituraSensores.IDUNIDADESENSORES + " INTEGER, "
+				  + LeituraSensores.ACCX + " REAL, "
+				  + LeituraSensores.ACCY + " REAL, "
+				  + LeituraSensores.ACCZ + " REAL, "
+				  + LeituraSensores.TEMP + " REAL, "
+				  + LeituraSensores.GRAVX + " REAL, "
+				  + LeituraSensores.GRAVY + " REAL, "
+				  + LeituraSensores.GRAVZ + " REAL, "
+				  + LeituraSensores.GYROX + " REAL, "
+				  + LeituraSensores.GYROY + " REAL, "
+				  + LeituraSensores.GYROZ + " REAL, "
+				  + LeituraSensores.LIGHT + " REAL, "
+				  + LeituraSensores.LINACCX + " REAL, "
+				  + LeituraSensores.LINACCY + " REAL, "
+				  + LeituraSensores.LINACCZ + " REAL, "
+				  + LeituraSensores.MAGX + " REAL, "
+				  + LeituraSensores.MAGY + " REAL, "
+				  + LeituraSensores.MAGZ + " REAL, "
+				  + LeituraSensores.ORIENTX + " REAL, "
+				  + LeituraSensores.ORIENTY + " REAL, "
+				  + LeituraSensores.ORIENTZ + " REAL, "
+				  + LeituraSensores.PRESS + " REAL, "
+				  + LeituraSensores.PROX + " REAL, "
+				  + LeituraSensores.HUM + " REAL, "
+				  + LeituraSensores.ROTX + " REAL, "
+				  + LeituraSensores.ROTY + " REAL, "
+				  + LeituraSensores.ROTZ + " REAL, "
+				  + LeituraSensores.ROTSCALAR + " REAL, "
+				  
+				  
+				  +"CONSTRAINT " + LeituraSensores.FK_LEITURASENSORES_UNIDADESENSORES +
+				    "FOREIGN KEY (" + LeituraSensores.IDUNIDADESENSORES + ")" +
+				    "REFERENCES " + UnidadeSensoresTable + " (" + UnidadeSensores.ID + ")"
+
+				  +"CONSTRAINT " + LeituraSensores.FK_LEITURASENSORES_OBSERVACAO +
+				    "FOREIGN KEY (" + LeituraSensores.IDOBSERVACAO + ")" +
+				    "REFERENCES " + ObservacaoTable + " (" + Observacao.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + LeituraSensores.FK_SENSORSREADING_SENSORUNITS_IDX + " ON " + LeituraSensoresTable + " (" + LeituraSensores.IDUNIDADESENSORES + " ASC);");
+		
+
+		db.execSQL("CREATE INDEX " + LeituraSensores.FK_SENSORSREADING_SAMPLE_IDX + " ON " +LeituraSensoresTable + " (" + LeituraSensores.IDOBSERVACAO + " ASC);");
+
+
+		// Local
+		db.execSQL("CREATE TABLE " + FuncaoTipoTable +  " (  " 
+				+ FuncaoTipo.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+				+ FuncaoTipo.TIPO + " TEXT");
+
+		//Table `FuncaoPosicao`
+		db.execSQL("CREATE TABLE "+ FuncaoPosicaoTable + " ( "
+				  + FuncaoPosicao.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + FuncaoPosicao.IDPOSICAO + " INTEGER, "
+				  + FuncaoPosicao.IDACCESSPOINT + " INTEGER, "
+				  + FuncaoPosicao.IDTIPO + " INTEGER, "
+				  + FuncaoPosicao.URI + " TEXT, "
+
+				  +"CONSTRAINT " + FuncaoPosicao.FK_FUNCAOPOSICAO_POSICAO +
+				    "FOREIGN KEY (" + FuncaoPosicao.IDPOSICAO + ")" +
+				    "REFERENCES " + PosicaoTable + " (" + Posicao.ID + ")"
+
+				  +"CONSTRAINT " + FuncaoPosicao.FK_FUNCAOPOSICAO_ACCESSPOINT +
+				    "FOREIGN KEY (" + FuncaoPosicao.IDACCESSPOINT + ")" +
+				    "REFERENCES " + AccessPointTable + " (" + AccessPoint.ID + ")"
+
+				  +"CONSTRAINT " + FuncaoPosicao.FK_FUNCAOPOSICAO_FUNCAOTIPO +
+				    "FOREIGN KEY (" + FuncaoPosicao.IDTIPO + ")" +
+				    "REFERENCES " + FuncaoTipoTable + " (" + FuncaoTipo.ID + ")"
+
+				  +"CONSTRAINT " + FuncaoPosicao.UNIQUE_FUNCAOTIPO +
+				    "UNIQUE (" + FuncaoPosicao.IDPOSICAO + ", " 
+				    		   + FuncaoPosicao.IDACCESSPOINT + ", " 
+				    		   + FuncaoPosicao.IDTIPO + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + FuncaoPosicao.FK_POSFUNC_LOCAL_IDX + " ON " + FuncaoPosicaoTable + " (" + FuncaoPosicao.IDPOSICAO + " ASC);");
+		
+
+		db.execSQL("CREATE INDEX " + FuncaoPosicao.FK_POSFUNC_ACCESSPOINT_IDX + " ON " + FuncaoPosicaoTable + " (" + FuncaoPosicao.IDACCESSPOINT + " ASC);");
+
+		
+		
+
+		//Table `Sala`
+		db.execSQL("CREATE TABLE "+ SalaTable + " ( "
+				  + Sala.ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+				  + Sala.IDANDAR + " INTEGER, "
+				  + Sala.NOME + " TEXT, "
+				  + Sala.IDPOLIGONO + " TEXT, "
+
+				  +"CONSTRAINT " + Sala.FK_SALA_ANDAR +
+				    "FOREIGN KEY (" + Sala.IDANDAR + ")" +
+				    "REFERENCES " + AndarTable + " (" + Andar.ID + ")"
+				  
+				  +");");
+
+		db.execSQL("CREATE INDEX " + Sala.FK_SALA_ANDAR_IDX + " ON " + SalaTable + " (" + Sala.IDANDAR + " ASC);");
+		
+		
 	}
 
-	// Indirect query for locals
-	public Cursor Local(String[] infos, String Where) {
-		Cursor c = DBFind.query(LocalTable, infos, Where, null, null, null,
-				null);
-		cursors.add(c);
-		return c;
-	}
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-	// Indirect query for Access Points
-	public Cursor AP(String[] infos, String Where) {
-		Cursor c = DBFind.query(Access_PointTable, infos, Where, null, null,
-				null, null);
-		cursors.add(c);
-		return c;
-	}
-
-	// Return the KDE object, which describes the probability distribution for a
-	// given Local (index) and Access Point (index).
-	public KDE KSDFunction(long localid, long apid) {
-		InputStream is = null;
-		ObjectInputStream ois = null;
-		KDE function = null;
-		String where = KSD.ID_AP + " == " + apid + " AND " + KSD.ID_LOCAL
-				+ " == " + localid;
-		Cursor list = DBFind.query(KSDTable, new String[] { KSD.LINK,
-				KSD.ID_AP, KSD.ID_LOCAL }, where, null, null, null, null);
-		if (list != null) {
-			list.moveToFirst();
-			String filename;
-			if (list.getCount() == 0) {
-				list.close();
-				return KDE.kde;
-			}
-
-			filename = list.getString(0);
-			try {
-				Log.d("DataManager", "Opening file stream...");
-				is = new FileInputStream(theContext.getFilesDir()
-						+ File.separator + filename);
-				Log.d("DataManager", "Opened " + theContext.getFilesDir()
-						+ File.separator + filename);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				list.close();
-				return null;
-			}
-
-			try {
-				Log.d("DataManager", "Opening object stream...");
-				ois = new ObjectInputStream(is);
-				Log.d("DataManager", "Object stream open");
-			} catch (StreamCorruptedException e) {
-				Toast.makeText(theContext, "File " + filename + " corrupted.",
-						Toast.LENGTH_LONG).show();
-				e.printStackTrace();
-			} catch (IOException e) {
-				Toast.makeText(theContext,
-						"File " + filename + " cannot be read.",
-						Toast.LENGTH_LONG).show();
-				e.printStackTrace();
-			}
-
-			try {
-				function = (KDE) ois.readObject();
-				Log.d("DataManager", "KDE Object read");
-			} catch (OptionalDataException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			if (ois != null)
-				try {
-					ois.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-			list.close();
-			return function;
-		}
-
-		return null;
-	}
-
-	// Calculate all KDE objects, for the whole database.
-	public void KSDWarming() {
-		ContentValues update = new ContentValues();
-		FileOutputStream fos = null;
-		ObjectOutputStream oos = null;
-		Cursor KSDlist = DBFind.query(KSDTable, new String[] { "rowid",
-				KSD.ID_AP, KSD.ID_LOCAL }, null, null, null, null, null);
-		Cursor Samplelist = null;
-		KDE ksfunction = null;
-		String filename = "";
-		String where = Sample.LOCAL + " = ? AND " + Sample.AP + " = ?";
-		String[] columns = new String[] { Sample.VALUE };
-
-		for (KSDlist.moveToFirst(); !KSDlist.isAfterLast(); KSDlist
-				.moveToNext()) {
-			Samplelist = DBFind.query(
-					SampleTable,
-					columns,
-					where,
-					new String[] { String.valueOf(KSDlist.getLong(2)),
-							String.valueOf(KSDlist.getLong(1)) }, null, null,
-					null);
-
-			ksfunction = new KDE(Samplelist, 0);
-			filename = "ks" + KSDlist.getLong(0);
-			try {
-				fos = new FileOutputStream(theContext.getFilesDir()
-						+ File.separator + filename);
-			} catch (FileNotFoundException e) {
-
-				Toast.makeText(theContext,
-						"File " + filename + " cannot be created.",
-						Toast.LENGTH_LONG).show();
-				e.printStackTrace();
-			}
-			try {
-				oos = new ObjectOutputStream(fos);
-			} catch (IOException e) {
-				Toast.makeText(theContext,
-						"File " + filename + " cannot be accessed.",
-						Toast.LENGTH_LONG).show();
-				e.printStackTrace();
-			}
-			try {
-				oos.writeObject(ksfunction);
-			} catch (IOException e) {
-				Toast.makeText(theContext,
-						"File " + filename + " cannot be written.",
-						Toast.LENGTH_LONG).show();
-				e.printStackTrace();
-			}
-
-			update.clear();
-			update.put(KSD.LINK, filename);
-			DBFind.update(KSDTable, update, "rowid == " + KSDlist.getLong(0),
-					null);
-
-		}
-		try {
-			oos.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		KSDlist.close();
-		Samplelist.close();
-
-	}
-
-	// Indirect and simplified query for samples, for a given local an access
-	// point.
-	public Cursor Samples(long localid, long apid) {
-		String where = Sample.AP + " == " + apid + " AND " + Sample.LOCAL
-				+ " == " + localid;
-		Cursor list = DBFind.query(SampleTable, new String[] { Sample.VALUE },
-				where, null, null, null, null);
-		cursors.add(list);
-		return list;
-	}
-
-	// Number of locals samples (NOT only rooms!)
-	public long NRooms() {
-		nroomsquery = DBFind.compileStatement("select count(*) from "
-				+ LocalTable + " ");
-		return nroomsquery.simpleQueryForLong();
-	}
-
-	public long NSamples(long room) {
-		nsamplesquery = DBFind.compileStatement("select count(*) from "
-				+ SampleTable + ", " + LocalTable + " where " + SampleTable
-				+ "." + Sample.LOCAL + " = " + LocalTable + "." + Local.ID
-				+ " and " + LocalTable + "." + Local.ROOM + " = ? ");
-
-		nsamplesquery.bindLong(1, room);
-		return nsamplesquery.simpleQueryForLong();
-
-	}
-
-	// Delete a given local, all its samples and its KDE object link, object
-	// itself if present.
-	public void deleteroom(int room) {
-
-		String where;
-		int cdroom;
-
-		SQLiteStatement sqlroom = DBFind.compileStatement("select (" + Local.ID
-				+ ") from " + LocalTable + " where " + Local.ROOM + " = "
-				+ room);
-
-		// return void if there was no rows!
-		try {
-			cdroom = (int) sqlroom.simpleQueryForLong();
-		} catch (SQLiteDoneException e) {
-			e.printStackTrace();
-			Toast.makeText(theContext, "There wasn't anything to delete =(",
-					Toast.LENGTH_LONG).show();
-			return;
-		}
-
-		where = Sample.LOCAL + " == " + cdroom;
-		DBFind.delete(SampleTable, where, null);
-
-		where = KSD.ID_LOCAL + " == " + cdroom;
-		DBFind.delete(KSDTable, where, null);
-
-		theContext.deleteFile("ks" + cdroom);
-
-		where = Local.ID + " == " + cdroom;
-		DBFind.delete(LocalTable, where, null);
-
-		Toast.makeText(theContext,
-				"YES! We did it! No more samples data here...",
-				Toast.LENGTH_LONG).show();
-
-	}
-
-	// return the mean of the samples per Access Point at a given room
-	public float NSamplesmean(long room) {
-
-		nsamplesquery = DBFind.compileStatement("select count(*) from "
-				+ SampleTable + ", " + LocalTable + " where " + SampleTable
-				+ "." + Sample.LOCAL + " = " + LocalTable + "." + Local.ID
-				+ " and " + LocalTable + "." + Local.ROOM + " = ? ");
-
-		nsamplesquery.bindLong(1, room);
-
-		SQLiteStatement npaquery = DBFind
-				.compileStatement("select count(*) from " + KSDTable + ", "
-						+ LocalTable + " where " + KSDTable + "."
-						+ KSD.ID_LOCAL + " = " + LocalTable + "." + Local.ID
-						+ " and " + LocalTable + "." + Local.ROOM + " = "
-						+ room);
-
-		float ans = (float) npaquery.simpleQueryForLong();
-		if (ans == 0)
-			return 0;
-
-		return nsamplesquery.simpleQueryForLong() / ans;
-
-	}
-
-	// Export Database to a given path with a given name
-	public void DBexport(String toPath, String name) throws IOException {
-		String dbPath = DBFind.getPath();
-		Log.d("DBexport", dbPath);
-		FileInputStream newDb = new FileInputStream(new File(dbPath));
-		FileOutputStream toFile = new FileOutputStream(new File(toPath, name));
-		FileChannel fromChannel = null;
-		FileChannel toChannel = null;
-		try {
-			fromChannel = newDb.getChannel();
-			toChannel = toFile.getChannel();
-			fromChannel.transferTo(0, fromChannel.size(), toChannel);
-		} finally {
-			try {
-				if (fromChannel != null) {
-					fromChannel.close();
-					newDb.close();
-				}
-			} finally {
-				if (toChannel != null) {
-					toChannel.close();
-					toFile.close();
-				}
-			}
-		}
-	}
-
-	// Overload DBexport for a std name called BDbackup.db
-	public void DBexport(String toPath) throws IOException {
-		DBexport(toPath, "BDbackup.db");
-	}
-
-	// Import Database from a given path with a given name
-	public void DBimport(String fromPath, String name) throws IOException {
-		String dbPath = DBFind.getPath();
-		Log.d("DBimport", dbPath);
-		FileInputStream newDb = new FileInputStream(new File(fromPath, name));
-		FileOutputStream toFile = new FileOutputStream(new File(dbPath));
-		FileChannel fromChannel = null;
-		FileChannel toChannel = null;
-		try {
-			fromChannel = newDb.getChannel();
-			toChannel = toFile.getChannel();
-			fromChannel.transferTo(0, fromChannel.size(), toChannel);
-		} finally {
-			try {
-				if (fromChannel != null) {
-					fromChannel.close();
-					newDb.close();
-				}
-			} finally {
-				if (toChannel != null) {
-					toChannel.close();
-					toFile.close();
-				}
-			}
-		}
-	}
-
-	// Overload DBimport for a std name called BDbackup.db
-	public void DBimport(String toPath) throws IOException {
-		DBimport(toPath, "BDbackup.db");
 	}
 
 }
