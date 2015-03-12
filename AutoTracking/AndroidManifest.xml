@@ -25,11 +25,6 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="com.sali.autotracking.MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name="com.sali.autotracking.Offline"
@@ -42,7 +37,11 @@
         </activity>
         <activity
             android:name="com.sali.autotracking.AutoColect"
-            android:label="@string/title_activity_auto_colect" >
+            android:label="@string/title_activity_auto_colect" ><intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity
             android:name="com.sali.autotracking.LoopColect"
