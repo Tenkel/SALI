@@ -95,7 +95,7 @@ public class AutoColect extends Activity {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				if (isChecked) {
-					if(!warmed){train();warmed=true;}
+					if(!warmed){train(null);warmed=true;}
 					onPredict=true;
 					chrono.setBase(SystemClock.elapsedRealtime());
 					chrono.start();
@@ -208,8 +208,10 @@ public class AutoColect extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 	
-	public void train(){
+	public void train(View view){
+		receiver.DTmg.open();
 		receiver.DTmg.KSDWarming();
+		receiver.DTmg.close();
 		warmed = true;
 	}
 	
