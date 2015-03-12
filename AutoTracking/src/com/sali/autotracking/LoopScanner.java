@@ -105,15 +105,15 @@ public class LoopScanner extends BroadcastReceiver implements
 				WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		// Can Disconnect WIFI - Manage Deprecation.
-		if (android.os.Build.VERSION.SDK_INT >= 17) {
-			Settings.Global.putInt(HostAct.getContentResolver(),
-					Settings.Global.WIFI_SLEEP_POLICY,
-					Settings.Global.WIFI_SLEEP_POLICY_DEFAULT);
-		} else {
-			Settings.System.putInt(HostAct.getContentResolver(),
-					Settings.System.WIFI_SLEEP_POLICY,
-					Settings.System.WIFI_SLEEP_POLICY_DEFAULT);
-		}
+//		if (android.os.Build.VERSION.SDK_INT >= 17) {
+//			Settings.Global.putInt(HostAct.getContentResolver(),
+//					Settings.Global.WIFI_SLEEP_POLICY,
+//					Settings.Global.WIFI_SLEEP_POLICY_DEFAULT);
+//		} else {
+//			Settings.System.putInt(HostAct.getContentResolver(),
+//					Settings.System.WIFI_SLEEP_POLICY,
+//					Settings.System.WIFI_SLEEP_POLICY_DEFAULT);
+//		}
 
 		DTmg.close();
 
@@ -212,15 +212,15 @@ public class LoopScanner extends BroadcastReceiver implements
 				WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		// Can't Disconnect from WIFI - Manage Deprecation.
-		if (android.os.Build.VERSION.SDK_INT >= 17) {
-			Settings.Global.putInt(HostAct.getContentResolver(),
-					Settings.Global.WIFI_SLEEP_POLICY,
-					Settings.Global.WIFI_SLEEP_POLICY_NEVER);
-		} else {
-			Settings.System.putInt(HostAct.getContentResolver(),
-					Settings.System.WIFI_SLEEP_POLICY,
-					Settings.System.WIFI_SLEEP_POLICY_NEVER);
-		}
+//		if (android.os.Build.VERSION.SDK_INT >= 17) {
+//			Settings.Global.putInt(HostAct.getContentResolver(),
+//					Settings.Global.WIFI_SLEEP_POLICY,
+//					Settings.Global.WIFI_SLEEP_POLICY_NEVER);
+//		} else {
+//			Settings.System.putInt(HostAct.getContentResolver(),
+//					Settings.System.WIFI_SLEEP_POLICY,
+//					Settings.System.WIFI_SLEEP_POLICY_NEVER);
+//		}
 
 		HostAct.registerReceiver(this, i);
 		regReceiver = true;
