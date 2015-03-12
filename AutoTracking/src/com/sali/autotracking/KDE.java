@@ -120,7 +120,7 @@ public class KDE implements Serializable {
 
 		for (int i = 0; i < n; i++)
 			for (int p = 0; p < DEMAX + 1; p++)
-				de[p] += kernel[DEMAX + p + sample[i]];
+				de[p] += kernel[DEMAX + p - sample[i]];
 
 		for (int p = 0; p < DEMAX + 1; p++)
 			log_de[p] = (float) Math.log(de[p]);
