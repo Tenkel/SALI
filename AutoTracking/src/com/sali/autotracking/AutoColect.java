@@ -95,6 +95,7 @@ public class AutoColect extends Activity {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				if (isChecked) {
+					if(!warmed){train();warmed=true;}
 					onPredict=true;
 					chrono.setBase(SystemClock.elapsedRealtime());
 					chrono.start();
