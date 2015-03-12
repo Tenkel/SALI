@@ -315,11 +315,13 @@ public class LoopScanner extends BroadcastReceiver implements
 		for (int l=0;!c.isAfterLast();l++){ // Um loop para todos os locais
 			Iterator<ScanResult> pa = results.iterator();
 			while (pa.hasNext()){
-				c2 = DTmg.AP(info, DataManager.Access_Point.NAME + " == '" + pa.next().BSSID + "'");
-				if(c2.getCount()==0)continue;
+				ScanResult actual_pa = pa.next();
+				c2 = DTmg.AP(info, DataManager.Access_Point.NAME + " == '" + actual_pa.BSSID + "'");
+				if(c2.getCount()==0)
+					probabilities[l] += KDE.KDEstd;
 				else{ 
 					c2.moveToFirst();
-					probabilities[l] += DTmg.KSDFunction(c.getLong(0), c2.getLong(0)).prob(pa.next().level);
+					probabilities[l] += DTmg.KSDFunction(c.getLong(0), c2.getLong(0)).prob(actual_pa.level);
 				}
 			// Maior probabilidade é onde o usuário está
 		   if (probabilities[l]>maxprob){
