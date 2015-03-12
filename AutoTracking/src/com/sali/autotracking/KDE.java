@@ -2,6 +2,8 @@ package com.sali.autotracking;
 
 import java.io.Serializable;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
 import android.database.Cursor;
 
 /*
@@ -14,19 +16,29 @@ import android.database.Cursor;
 public class KDE implements Serializable {
 	// Automatic created serial version for saved file (class) version control.
 	private static final long serialVersionUID = 8577653431740491416L;
+	// Gaussian convertion from MAD to std dev
+	private static final double K = 1.48260221850560186054707652936042343132670320259031289653626627524567444762269507362139420351582823911612666986905846932;
 	// h = bandwidth
-	private float h;
+	private double h;
 	// -DEMAX is expected to be the lowest value.
 	private static final int DEMAX = 120;
-	// KDE data distribution
-	private float[] de = new float[DEMAX + 1];
+	// LOG KDE data distribution
+	private float[] log_de = new float[DEMAX + 1];
 	// Standard KDE for undiscovered wifi signals.
-	public static final KDE kde = new KDE(new int[] { 100, 100, 100, 95 }, 0);
+	public static final float KDEstd = -200;
+	public static final KDE kde = new KDE();
+	
+	
 
 	/*
 	 * Read the column values from the samplelist and use it as base for the
 	 * KDE.
 	 */
+	private KDE(){
+		this.h=0;
+		for(int i=0;i<DEMAX+1;i++)
+			log_de[i]=KDEstd;
+	}
 	public KDE(Cursor samplelist, int column) {
 		int n = samplelist.getCount();
 		int[] sample = new int[n];
@@ -50,10 +62,10 @@ public class KDE implements Serializable {
 
 	// power is minus the index of the array.
 	public float prob(int power) {
-		return de[Math.abs(power)];
+		return log_de[Math.abs(power)];
 	}
 
-	public float bandwidth() {
+	public double bandwidth() {
 		return h;
 	}
 
@@ -61,47 +73,57 @@ public class KDE implements Serializable {
 	 * Calculate KDE from samples (and its size 'n') and return the found
 	 * bandwidth value.
 	 */
-	public float recalulate(int[] sample, int n) {
+	public double recalulate(int[] sample, int n) {
 
-		float[] kernel = new float[2 * DEMAX + 1];
+		double[] kernel = new double[2 * DEMAX + 1];
 
 		// Finding sub-optimal h
-		float sm = 0;
+		DescriptiveStatistics base_stats = new DescriptiveStatistics();
+
 		for (int i = 0; i < n; i++) {
-			sm += sample[i];
-		}
-		sm /= n;
-
-		float sc = 0;
-		for (int i = 0; i < n; i++) {
-			sc += (sample[i] - sm) * (sample[i] - sm);
-		}
-		try {
-			sc /= (n - 1);
-		} catch (ArithmeticException e) {
-			sc /= n;
+			sample[i] = Math.abs(sample[i]);
+			base_stats.addValue(sample[i]);
 		}
 
-		sc = (float) Math.pow((double) sc, 0.5);
+		double median = base_stats.getPercentile(50);
 
-		h = (float) (Math.pow(4.0 / (3 * n), 0.2) * sc);
+		DescriptiveStatistics dev_stats = new DescriptiveStatistics();
+
+		for (int i = 0; i < n; i++)
+			dev_stats.addValue(Math.abs(sample[i] - median));
+
+		// "conversion" from MAD to std dev
+		double sig = K * dev_stats.getPercentile(50);
+
+		// if coulnd't compute, give some spread info
+		if (sig <= 0)
+			sig = base_stats.getMax() - base_stats.getMin();
+
+		if (sig > 0) // Silverman rule of DUMB
+			h = Math.pow(4.0 / (3 * n), 0.2) * sig;
+		else
+			// if everything goes wrong e.g. No std dev
+			h = 1;
 
 		// Creating Kernel
 		double a = 1.0 / (n * h * Math.pow(2 * Math.PI, 0.5));
 		double b = 1.0 / Math.pow(Math.E, 1.0 / (2 * h * h));
 
 		for (int i = 0; i < 2 * DEMAX + 1; i++)
-			kernel[i] = (float) (a * Math.pow(b, (i - DEMAX) * (i - DEMAX)));
+			kernel[i] = a * Math.pow(b, (i - DEMAX) * (i - DEMAX));
 
 		// Creating DE (Kernel convolution)
+		double[] de = new double[DEMAX + 1];
+
 		for (int p = 0; p < DEMAX + 1; p++)
 			de[p] = 0;
 
-		for (int i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++)
 			for (int p = 0; p < DEMAX + 1; p++)
 				de[p] += kernel[DEMAX + p + sample[i]];
 
-		}
+		for (int p = 0; p < DEMAX + 1; p++)
+			log_de[p] = (float) Math.log(de[p]);
 
 		return h;
 	}
@@ -110,7 +132,7 @@ public class KDE implements Serializable {
 	 * Calculate KDE from samples (and its size 'n') and a given bandwidth.
 	 * Returning the bandwidth value.
 	 */
-	public float recalulate(Cursor samplelist, int column, float bandwidth) {
+	public double recalulate(Cursor samplelist, int column, float bandwidth) {
 		h = Math.abs(bandwidth);
 		int n = samplelist.getCount();
 		float[] kernel = new float[2 * DEMAX + 1];
@@ -129,15 +151,18 @@ public class KDE implements Serializable {
 		for (int i = 0; i < 2 * DEMAX + 1; i++)
 			kernel[i] = (float) (a * Math.pow(b, (i - DEMAX) * (i - DEMAX)));
 
-		// Creating DE
+		// Creating DE (Kernel convolution)
+		double[] de = new double[DEMAX + 1];
+
 		for (int p = 0; p < DEMAX + 1; p++)
 			de[p] = 0;
 
-		for (int i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++)
 			for (int p = 0; p < DEMAX + 1; p++)
-				de[p] = kernel[DEMAX + p + sample[i]];
+				de[p] += kernel[DEMAX + p + sample[i]];
 
-		}
+		for (int p = 0; p < DEMAX + 1; p++)
+			log_de[p] = (float) Math.log(de[p]);
 
 		return h;
 

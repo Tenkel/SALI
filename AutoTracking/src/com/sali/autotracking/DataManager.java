@@ -257,7 +257,7 @@ public class DataManager {
 			String filename;
 			if (list.getCount() == 0) {
 				list.close();
-				return KDE.kde;
+				return KDE.kde; 
 			}
 
 			filename = list.getString(0);

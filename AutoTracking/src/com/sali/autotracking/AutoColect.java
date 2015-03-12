@@ -31,7 +31,11 @@ public class AutoColect extends Activity {
 
 	// Dialogs
 	private Chronometer chrono;
-
+    private static boolean onCollect=false;
+    private static boolean onPredict=false;
+    private static boolean warmed = false;
+    private ToggleButton Collect;
+    private ToggleButton Predict;
 	// Wifi Variables
 	LoopScanner receiver;
 
@@ -54,23 +58,29 @@ public class AutoColect extends Activity {
 		Room.setValue(nrooms);
 		receiver.setroom(nrooms);
 		
-
 		chrono = (Chronometer) findViewById(R.id.chronometer1);
 		Log.d("AC", "after chrono");
-
-		((ToggleButton) findViewById(R.id.toggleButton1))
-				.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+		Collect = (ToggleButton) findViewById(R.id.toggleButton1);
+		Predict = (ToggleButton) findViewById(R.id.toggleButton2);
+		if(onCollect)Predict.setClickable(false);
+		if(onPredict)Collect.setClickable(false);
+		
+		Collect.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
 					public void onCheckedChanged(CompoundButton buttonView,
 							boolean isChecked) {
 						if (isChecked) {
+							onCollect=true;
 							chrono.setBase(SystemClock.elapsedRealtime());
 							chrono.start();
 							LoopBar.setVisibility(View.VISIBLE);
-							receiver.acquire();
-						} else {
+							warmed=false;
+							receiver.toSave=true;
+							receiver.acquire();	
+						} 
+						else {
 							chrono.stop();
-
+							onCollect=false;
 							// Stop loop animation.
 							LoopBar.setVisibility(View.INVISIBLE);
 							receiver.pause();
@@ -79,6 +89,28 @@ public class AutoColect extends Activity {
 					}
 				});
 		Log.d("AC", "after toggle");
+		
+		Predict.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				if (isChecked) {
+					onPredict=true;
+					chrono.setBase(SystemClock.elapsedRealtime());
+					chrono.start();
+					LoopBar.setVisibility(View.VISIBLE);
+					receiver.toSave=false;
+					receiver.acquire();
+				} else {
+					chrono.stop();
+					onPredict=false;
+					// Stop loop animation.
+					LoopBar.setVisibility(View.INVISIBLE);
+					receiver.pause();
+				}
+
+			}
+		});
 		
 		Room.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
 			
@@ -173,6 +205,15 @@ public class AutoColect extends Activity {
 		alert.show();
 		
 		return super.onOptionsItemSelected(item);
+	}
+	
+	public void train(){
+		receiver.DTmg.KSDWarming();
+		warmed = true;
+	}
+	
+	public void predict(){
+		
 	}
 
 }

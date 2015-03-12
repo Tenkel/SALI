@@ -1,6 +1,8 @@
 package com.sali.autotracking;
 
+import java.util.Iterator;
 import java.util.List;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -8,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -20,6 +23,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import com.sali.autotracking.R;
 
 /*
@@ -57,6 +61,7 @@ public class LoopScanner extends BroadcastReceiver implements
 	SharedPreferences settings;
 	SharedPreferences.Editor editor;
 	private static final String SAVESCAN = "numscan";
+	public boolean toSave=true;
 
 	/*
 	 * Save the context reference and initialize all used variables.
@@ -224,6 +229,23 @@ public class LoopScanner extends BroadcastReceiver implements
 		Wmg.startScan();
 
 	}
+	
+	public void saveInBD(List<ScanResult> results, float gyrox, float gyroy, float gyroz){
+		DTmg.open();
+		for (ScanResult result : results) {
+			DTmg.insert(result.level, result.BSSID, nroom, nroom, nroom, gyrox,
+					gyroy, gyroz, acc);
+		}
+
+		// Shared that DB has new entry
+		editor = settings.edit();
+		editor.putBoolean("warmed", false);
+		editor.commit();
+
+		mean = DTmg.NSamplesmean(nroom);
+
+		DTmg.close();
+	}
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	@Override
@@ -239,6 +261,7 @@ public class LoopScanner extends BroadcastReceiver implements
 		float gyrox = 0;
 		float gyroy = 0;
 		float gyroz = 0;
+		int place = 0;
 
 		if (android.os.Build.VERSION.SDK_INT >= 9) {
 			gyrox = orientationv[0];
@@ -256,40 +279,59 @@ public class LoopScanner extends BroadcastReceiver implements
 					* Math.signum(R[3] - R[1]);
 		}
 
-		DTmg.open();
 		List<ScanResult> results = Wmg.getScanResults();
-		for (ScanResult result : results) {
-			DTmg.insert(result.level, result.BSSID, nroom, nroom, nroom, gyrox,
-					gyroy, gyroz, acc);
-		}
-
-		// DUPLICATE ENTRY - add actual connection twice sometimes.
-		//
-		// WifiInfo actual_connection = Wmg.getConnectionInfo ();
-		// if (actual_connection.getNetworkId()!=-1){
-		// DTmg.insert(actual_connection.getRssi(),
-		// actual_connection.getBSSID(),nroom,nroom,nroom, gyrox, gyroy, gyroz,
-		// acc);
-		// }
-
-		// Shared that DB has new entry
-		editor = settings.edit();
-		editor.putBoolean("warmed", false);
-		editor.commit();
-
-		mean = DTmg.NSamplesmean(nroom);
-
-		DTmg.close();
-
+		if(toSave)saveInBD(results,gyrox,gyroy,gyroz);
+		else place = predict(results);
 		numscan += 1;
 
+		if(toSave){
 		((TextView) HostAct.findViewById(R.id.textView2)).setText(String
 				.valueOf(numscan));
 		((TextView) HostAct.findViewById(R.id.textView1)).setText(String
 				.valueOf(mean));
-
+		}
+		else{
+			((TextView) HostAct.findViewById(R.id.textView2)).setText(String
+					.valueOf(numscan));
+			((TextView) HostAct.findViewById(R.id.textView3)).setText(String
+					.valueOf(place));	
+		}
 		Wmg.startScan();
 
+	}
+
+
+	private int predict(List<ScanResult> results) {
+		DTmg.open();
+		int place = 0;
+		Cursor c = DTmg.Local(new String[]{DataManager.Local.ID,DataManager.Local.PX,DataManager.Local.PY}, null); // cursor com os locais da base de dados
+		Cursor c2 = null;
+		String[] info = new String[]{DataManager.Access_Point.ID};
+		  
+		float[] probabilities = new float[c.getCount()];
+		for (int i=0;i<c.getCount();i++)probabilities[i]=0;
+		float maxprob = Float.NEGATIVE_INFINITY;
+		c.moveToFirst();
+		for (int l=0;!c.isAfterLast();l++){ // Um loop para todos os locais
+			Iterator<ScanResult> pa = results.iterator();
+			while (pa.hasNext()){
+				c2 = DTmg.AP(info, DataManager.Access_Point.NAME + " == '" + pa.next().BSSID + "'");
+				if(c2.getCount()==0)continue;
+				else{ 
+					c2.moveToFirst();
+					probabilities[l] += DTmg.KSDFunction(c.getLong(0), c2.getLong(0)).prob(pa.next().level);
+				}
+			// Maior probabilidade é onde o usuário está
+		   if (probabilities[l]>maxprob){
+			   place = c.getInt(1);
+			   maxprob=probabilities[l];
+		   }
+		}
+		c.moveToNext();
+	}
+		DTmg.close();
+		return place;
+		
 	}
 
 }
